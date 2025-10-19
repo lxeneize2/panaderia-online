@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador de Panadería | Panel de Administración</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Scripts de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #FDFBF8; }
+        .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); padding: 1.5rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; transition: all 0.2s ease-in-out; cursor: pointer; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn-primary { background-color: #6D4C41; color: white; }
+        .btn-primary:hover { background-color: #4E342E; }
+        .btn-secondary { background-color: #A1887F; color: white; }
+        .btn-secondary:hover { background-color: #8D6E63; }
+        .btn-danger { background-color: #E57373; color: white; }
+        .btn-danger:hover { background-color: #D32F2F; }
+        input, select { border-radius: 0.5rem; border: 1px solid #D1C4E9; padding: 0.5rem; width: 100%; }
+        input:focus, select:focus { outline: none; border-color: #6D4C41; box-shadow: 0 0 0 2px #D1C4E9; }
+        .modal-container.hidden { display: none; }
+        .modal-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 1rem; }
+        .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); padding: 1.5rem; position: relative; z-index: 50; width: 90%; max-width: 600px; margin: auto; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; }
+        .loading-overlay.hidden { display: none; }
+        .nav-btn { color: #4E342E; font-weight: 500; padding: 0.5rem 1rem; border-radius: 0.5rem; }
+        .nav-btn.active { background-color: #D7CCC8; }
+        .nav-btn:hover { background-color: #EFEBE9; }
+        
+        .completion-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: #4CAF50; border-radius: 50%; width: 10px; height: 10px; opacity: 0; transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); pointer-events: none; z-index: 10; }
+        .completion-overlay.active { transform: translate(-50%, -50%) scale(200); opacity: 1; }
+        .completion-overlay .checkmark { color: white; font-size: 3rem; font-weight: bold; opacity: 0; transform: scale(0.5); transition: all 0.4s 0.3s ease-out; }
+        .completion-overlay.active .checkmark { opacity: 1; transform: scale(1); }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-overlay">
+        <svg class="animate-spin h-8 w-8 text-stone-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+    </div>
+
+    <!-- PANTALLA DE LOGIN -->
+    <div id="login-container" class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8 card !overflow-visible">
+            <div><h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Acceso de Administrador</h2></div>
+            <form id="login-form" class="mt-8 space-y-6">
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <div><label for="email-address" class="sr-only">Email</label><input id="email-address" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Email"></div>
+                    <div><label for="password" class="sr-only">Contraseña</label><input id="password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Contraseña"></div>
+                </div>
+                <p id="login-error" class="text-red-500 text-sm hidden"></p>
+                <div><button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white btn-primary">Ingresar</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PANEL DE ADMINISTRACIÓN (Oculto por defecto) -->
+    <div id="admin-panel" class="hidden">
+        <div class="container mx-auto p-4 md:p-8">
+            <nav class="card !overflow-visible flex flex-wrap justify-between items-center gap-4">
+                <div class="flex flex-wrap items-center gap-2">
+                    <button class="nav-btn active" data-section="pedidos">Pedidos</button>
+                    <button class="nav-btn" data-section="materiales">Materiales</button>
+                    <button class="nav-btn" data-section="recetas">Recetas</button>
+                    <button class="nav-btn" data-section="historial">Historial</button>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="pedido.html" target="_blank" class="nav-btn bg-blue-100 text-blue-800 hover:bg-blue-200">Ver Tienda</a>
+                    <button id="logout-btn" class="btn btn-danger">Cerrar Sesión</button>
+                </div>
+            </nav>
+
+            <main id="app-content">
+                <section id="section-pedidos" class="app-section">
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                        <div class="lg:col-span-3 space-y-6"><div class="card !overflow-visible"><div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"><h2 class="text-2xl font-bold text-stone-700">Pedidos Activos</h2><button id="add-order-btn" class="btn btn-primary w-full sm:w-auto">Crear Nuevo Pedido</button></div><div id="orders-container" class="space-y-4"><p class="text-center text-stone-500">Aún no hay pedidos activos.</p></div></div></div>
+                        <div class="lg:col-span-2 space-y-6">
+                            <div class="card !overflow-visible"><h3 class="text-xl font-bold text-stone-700 mb-4">Lista de Compras Global</h3><p class="text-sm text-stone-500 mb-4">Materiales para todos los pedidos activos.</p><ul id="shopping-list" class="space-y-2 text-stone-600"><li>Crea un pedido para ver los materiales.</li></ul></div>
+                            <div class="card !overflow-visible bg-stone-700 text-white"><h3 class="text-xl font-bold mb-2">Costo Total de Producción</h3><p id="total-production-cost" class="text-4xl font-bold">$0.00</p></div>
+                            <div class="card !overflow-visible bg-blue-800 text-white"><h3 class="text-xl font-bold mb-2">Tiempo Total de Cocción</h3><p id="total-cooking-time" class="text-4xl font-bold">0 min</p></div>
+                        </div>
+                    </div>
+                </section>
+                <section id="section-materiales" class="app-section hidden">
+                     <div class="card !overflow-visible"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-stone-700">Materiales</h2><button id="add-material-btn" class="btn btn-secondary">Nuevo Material</button></div><div class="overflow-x-auto"><table class="w-full text-sm text-left text-stone-500"><thead class="text-xs text-stone-700 uppercase bg-stone-50"><tr><th scope="col" class="px-6 py-3">Nombre</th><th scope="col" class="px-6 py-3">$/gr</th><th scope="col" class="px-6 py-3 text-right">Acciones</th></tr></thead><tbody id="materials-table"></tbody></table></div></div>
+                </section>
+                <section id="section-recetas" class="app-section hidden">
+                    <div class="card !overflow-visible"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-stone-700">Recetas</h2><button id="add-recipe-btn" class="btn btn-secondary">Nueva Receta</button></div><div id="recipes-list" class="space-y-4"></div></div>
+                </section>
+                <section id="section-historial" class="app-section hidden">
+                    <div class="card !overflow-visible">
+                        <h2 class="text-2xl font-bold text-stone-700 mb-4">Historial de Ventas</h2>
+                        <div id="history-content" class="max-h-[70vh] overflow-y-auto"></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div id="material-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 id="material-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3><form id="material-form"><div class="space-y-4"><div><label for="material-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="material-name" required></div><div><label for="material-weight" class="block text-sm font-medium text-stone-600 mb-1">Peso (gr)</label><input type="number" id="material-weight" required></div><div><label for="material-price" class="block text-sm font-medium text-stone-600 mb-1">Precio ($)</label><input type="number" step="0.01" id="material-price" required></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
+    <div id="recipe-modal" class="modal-container hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+             <h3 id="recipe-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3>
+             <form id="recipe-form"><div class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label for="recipe-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="recipe-name" required></div>
+                    <div><label for="recipe-sale-price" class="block text-sm font-medium text-stone-600 mb-1">Precio Venta ($)</label><input type="number" step="0.01" id="recipe-sale-price" required></div>
+                </div>
+                <div><label for="recipe-cooking-time" class="block text-sm font-medium text-stone-600 mb-1">Tiempo Cocción (min)</label><input type="number" id="recipe-cooking-time"></div>
+                <div><label for="recipe-image-url" class="block text-sm font-medium text-stone-600 mb-1">URL Imagen</label><input type="text" id="recipe-image-url"></div>
+                <div class="relative"><label for="ingredient-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Material</label><input type="text" id="ingredient-search"><div id="ingredient-search-results" class="absolute bg-white border z-10 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div></div>
+                <div><h4 class="text-md font-medium text-stone-600 mb-2">Ingredientes</h4><div id="ingredients-container" class="space-y-2 border p-2 rounded-md min-h-[50px]"></div></div>
+            </div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form>
+        </div>
+    </div>
+    <div id="new-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Crear Pedido</h3><form id="new-order-form"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="customer-name" required></div><div><label for="customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="customer-phone"></div></div><div><label for="delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="delivery-date"></div><div class="relative"><label for="order-recipe-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Producto</label><input type="text" id="order-recipe-search"><div id="order-recipe-search-results" class="absolute bg-white border z-20 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div></div><div><h4 class="text-md font-medium text-stone-600 mb-2">Productos</h4><div id="order-selected-recipes" class="space-y-2 border p-3 rounded-md min-h-[60px] max-h-48 overflow-y-auto"></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Crear</button></div></form></div></div>
+    <div id="order-details-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Materiales del Pedido</h3><div id="order-details-content"></div><div class="flex justify-end mt-6"><button type="button" class="btn-cancel-modal btn btn-primary">Cerrar</button></div></div></div>
+    <div id="edit-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Editar Pedido</h3><form id="edit-order-form"><input type="hidden" id="edit-order-id"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="edit-customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="edit-customer-name" required></div><div><label for="edit-customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="edit-customer-phone"></div></div><div><label for="edit-delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="edit-delivery-date"></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const firebaseConfig = {
+            apiKey: "AIzaSyBY-BS1UfJjTcaQWBkqLfcIT6sCngfaCmU",
+            authDomain: "mi-panaderia-online.firebaseapp.com",
+            projectId: "mi-panaderia-online",
+            storageBucket: "mi-panaderia-online.firebasestorage.app",
+            messagingSenderId: "880103240107",
+            appId: "1:880103240107:web:7aef22bea8abdeae7fa2ee"
+        };
+        try { firebase.initializeApp(firebaseConfig); } catch (e) { console.error("Firebase ya fue inicializado."); }
+        
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        const loginContainer = document.getElementById('login-container');
+        const adminPanel = document.getElementById('admin-panel');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const logoutBtn = document.getElementById('logout-btn');
+        const loading = document.getElementById('loading');
+        
+        auth.onAuthStateChanged(user => {
+            if (user && !user.isAnonymous) {
+                loginContainer.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                loading.classList.remove('hidden');
+                setupRealtimeListeners(user);
+            } else {
+                loginContainer.classList.remove('hidden');
+                adminPanel.classList.add('hidden');
+                loading.classList.add('hidden');
+            }
+        });
+
+        loginForm.addEventListener('submit', e => { e.preventDefault(); loginError.classList.add('hidden'); const email = loginForm['email-address'].value; const password = loginForm['password'].value; auth.signInWithEmailAndPassword(email, password).catch(error => { console.error("Error de login:", error); loginError.textContent = "Email o contraseña incorrectos."; loginError.classList.remove('hidden'); }); });
+        logoutBtn.addEventListener('click', () => { auth.signOut(); });
+
+        function setupRealtimeListeners(user) {
+            if (!user) return;
+            
+            let materials = [], recipes = [], orders = [];
+            let animatingOrderId = null; // Para evitar re-renderizado durante la animación
+            const newOrderModalEl = document.getElementById('new-order-modal');
+            newOrderModalEl.items = [];
+
+            const materialsTable = document.getElementById('materials-table');
+            const recipesList = document.getElementById('recipes-list');
+            const shoppingListEl = document.getElementById('shopping-list');
+            const totalProductionCostEl = document.getElementById('total-production-cost');
+            const totalCookingTimeEl = document.getElementById('total-cooking-time');
+            const ordersContainer = document.getElementById('orders-container');
+            const materialModal = document.getElementById('material-modal');
+            const recipeModal = document.getElementById('recipe-modal');
+            const orderDetailsModal = document.getElementById('order-details-modal');
+            const editOrderModal = document.getElementById('edit-order-modal');
+            const historyContent = document.getElementById('history-content');
+
+            const materialsCollection = db.collection('materials');
+            const recipesCollection = db.collection('recipes');
+            const ordersCollection = db.collection('orders');
+            const completedOrdersCollection = db.collection('completedOrders');
+
+            const navButtons = document.querySelectorAll('.nav-btn[data-section]');
+            const sections = document.querySelectorAll('.app-section');
+
+            function showSection(sectionId) {
+                sections.forEach(section => section.classList.toggle('hidden', section.id !== `section-${sectionId}`));
+                navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.section === sectionId));
+                if(sectionId === 'historial') renderHistory();
+            }
+            navButtons.forEach(button => button.addEventListener('click', () => showSection(button.dataset.section)));
+
+            materialsCollection.orderBy("name").onSnapshot(snapshot => { materials = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); if(!animatingOrderId) renderAll(); });
+            recipesCollection.onSnapshot(snapshot => { recipes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); if(!animatingOrderId) renderAll(); });
+            ordersCollection.orderBy("createdAt", "desc").onSnapshot(snapshot => {
+                orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (!animatingOrderId) renderAll();
+            });
+            loading.classList.add('hidden');
+
+            const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount || 0);
+            const formatMinutes = (mins) => { if (!mins || mins < 1) return '0 min'; const h = Math.floor(mins / 60); const m = mins % 60; return `${h > 0 ? h + 'h ' : ''}${m}min`; };
+            const renderAll = () => { renderMaterialsTable(); renderRecipesList(); renderOrders(); renderGlobalShoppingListAndTotalCost(); };
+            const renderMaterialsTable = () => { materialsTable.innerHTML = ''; if (materials.length === 0) { materialsTable.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-stone-500">Aún no hay materiales.</td></tr>`; return; } materials.forEach(material => { const pricePerGram = (material.price && material.weight) ? material.price / material.weight : 0; const row = document.createElement('tr'); row.className = 'bg-white border-b'; row.innerHTML = `<td class="px-6 py-4 font-medium text-stone-900 whitespace-nowrap">${material.name}</td><td class="px-6 py-4">${formatCurrency(pricePerGram)}</td><td class="px-6 py-4 text-right space-x-2"><button class="btn text-xs btn-secondary" data-action="edit-material" data-id="${material.id}">Editar</button><button class="btn text-xs btn-danger" data-action="delete-material" data-id="${material.id}">Eliminar</button></td>`; materialsTable.appendChild(row); }); };
+            const renderRecipesList = () => { recipesList.innerHTML = ''; if (recipes.length === 0) { recipesList.innerHTML = `<p class="text-center p-4 text-stone-500">Aún no hay recetas.</p>`; return; } recipes.forEach(recipe => { const recipeCost = calculateRecipeCost(recipe.id); const recipeCard = document.createElement('div'); recipeCard.className = `p-4 border rounded-lg ${recipe.isAffected ? 'recipe-affected' : ''}`; recipeCard.innerHTML = `<div class="flex justify-between items-start"><div><h4 class="font-bold text-stone-800">${recipe.name}</h4><p class="text-sm text-stone-600">Costo: ${formatCurrency(recipeCost)} | Venta: ${formatCurrency(recipe.salePrice)}</p><p class="text-sm text-blue-600">Cocción: ${formatMinutes(recipe.cookingTime)}</p>${recipe.isAffected ? '<p class="text-xs text-red-600">Un material fue eliminado.</p>' : ''}</div><div class="flex gap-2"><button class="btn text-xs btn-secondary" data-action="edit-recipe" data-id="${recipe.id}">Editar</button><button class="btn text-xs btn-danger" data-action="delete-recipe" data-id="${recipe.id}">Eliminar</button></div></div>`; recipesList.appendChild(recipeCard); }); };
+            const renderOrders = () => {
+                ordersContainer.innerHTML = ''; if (orders.length === 0) { ordersContainer.innerHTML = `<p class="text-center text-stone-500">Aún no hay pedidos activos.</p>`; return; }
+                orders.forEach(order => {
+                    const orderCard = document.createElement('div'); orderCard.className = 'card !p-0 !mb-4 order-card'; orderCard.id = `order-${order.id}`; let totalSalePrice = 0; let totalCookingTime = 0;
+                    const itemsHtml = (order.items || []).map(item => { const recipe = recipes.find(r => r.id === item.recipeId); const salePrice = (recipe ? recipe.salePrice : 0) * item.quantity; totalSalePrice += salePrice; totalCookingTime += (recipe ? recipe.cookingTime || 0 : 0) * item.quantity; return `<li class="flex justify-between items-center py-1"><span class="text-stone-700">${item.quantity} x ${recipe ? recipe.name : 'Receta eliminada'}</span><span class="text-sm text-stone-800 font-medium">${formatCurrency(salePrice)}</span></li>`; }).join('');
+                    const deliveryDateHtml = order.deliveryDate ? `<p class="text-sm text-yellow-800 bg-yellow-100 px-2 py-1 rounded-full">Entrega: ${new Date(order.deliveryDate).toLocaleDateString('es-AR', {timeZone: 'UTC'})}</p>` : '';
+                    orderCard.innerHTML = `<div class="completion-overlay"><span class="checkmark">¡Completado!</span></div><div class="p-4 bg-stone-50 rounded-t-lg border-b"><div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"><div><h4 class="font-bold text-stone-800">${order.customerName}</h4><p class="text-sm text-stone-500">${order.customerPhone}</p></div><div class="flex items-center gap-2 flex-wrap justify-end">${deliveryDateHtml}<button class="btn text-xs bg-green-100 text-green-800 hover:bg-green-200" data-action="complete-order" data-id="${order.id}">Completar</button><button class="btn text-xs bg-yellow-100 text-yellow-800 hover:bg-yellow-200" data-action="edit-order" data-id="${order.id}">Editar</button><button class="btn text-xs bg-blue-100 text-blue-800 hover:bg-blue-200" data-action="toggle-materials" data-id="${order.id}"><svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><button class="btn text-xs btn-danger" data-action="delete-order" data-id="${order.id}">Eliminar</button></div></div></div><ul class="p-4 space-y-1">${itemsHtml}</ul><div class="p-4 bg-stone-50 rounded-b-lg border-t flex justify-between items-center"><span class="font-bold text-blue-800">Cocción: ${formatMinutes(totalCookingTime)}</span><span class="font-bold text-stone-800">Total Venta: ${formatCurrency(totalSalePrice)}</span></div><div class="order-materials hidden p-4 border-t text-sm"></div>`;
+                    ordersContainer.appendChild(orderCard);
+                });
+            };
+            const renderGlobalShoppingListAndTotalCost = () => {
+                const totalIngredients = {}; let totalCost = 0; let totalCookTime = 0;
+                orders.forEach(order => { (order.items || []).forEach(item => { const recipe = recipes.find(r => r.id === item.recipeId); if (!recipe) return; totalCost += calculateRecipeCost(recipe.id) * item.quantity; totalCookTime += (recipe.cookingTime || 0) * item.quantity; (recipe.ingredients || []).forEach(ing => { const material = materials.find(m => m.id === ing.materialId); if (!material) return; if (!totalIngredients[material.name]) totalIngredients[material.name] = 0; totalIngredients[material.name] += ing.grams * item.quantity; }); }); });
+                shoppingListEl.innerHTML = Object.keys(totalIngredients).length === 0 ? `<li>Crea un pedido para ver los materiales.</li>` : Object.keys(totalIngredients).sort().map(name => `<li class="flex justify-between"><span>${name}</span> <strong>${totalIngredients[name].toFixed(0)} gr</strong></li>`).join('');
+                totalProductionCostEl.textContent = formatCurrency(totalCost);
+                totalCookingTimeEl.textContent = formatMinutes(totalCookTime);
+            };
+            const calculateRecipeCost = (recipeId) => { const recipe = recipes.find(r => r.id === recipeId); if (!recipe || !recipe.ingredients) return 0; return recipe.ingredients.reduce((total, ingredient) => { const material = materials.find(m => m.id === ingredient.materialId); if (!material) return total; const pricePerGram = (material.price / material.weight) || 0; return total + (pricePerGram * ingredient.grams); }, 0); };
+            function openModal(modalEl) { modalEl.classList.remove('hidden'); }
+            function closeModal(modalEl) { modalEl.classList.add('hidden'); }
+            document.querySelectorAll('.btn-cancel-modal, .modal-backdrop').forEach(el => { el.addEventListener('click', () => { document.querySelectorAll('.modal-container').forEach(modal => modal.classList.add('hidden')); }); });
+            document.getElementById('add-material-btn').addEventListener('click', () => { const form = materialModal.querySelector('form'); form.reset(); materialModal.dataset.editingId = ''; materialModal.querySelector('h3').textContent = 'Nuevo Material'; openModal(materialModal); });
+            materialsTable.addEventListener('click', e => { const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; if (action === 'edit-material') { const material = materials.find(m => m.id === id); if (!material) return; const form = materialModal.querySelector('form'); form.querySelector('#material-name').value = material.name; form.querySelector('#material-weight').value = material.weight; form.querySelector('#material-price').value = material.price; materialModal.dataset.editingId = id; materialModal.querySelector('h3').textContent = 'Editar Material'; openModal(materialModal); } else if (action === 'delete-material') { if (!confirm('¿Seguro?')) return; const batch = db.batch(); recipes.forEach(recipe => { if ((recipe.ingredients || []).some(ing => ing.materialId === id)) { batch.update(recipesCollection.doc(recipe.id), { isAffected: true }); } }); batch.commit().then(() => { materialsCollection.doc(id).delete(); }); } });
+            materialModal.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); const id = materialModal.dataset.editingId; const name = e.target.querySelector('#material-name').value; const weight = parseFloat(e.target.querySelector('#material-weight').value); const price = parseFloat(e.target.querySelector('#material-price').value); const materialData = { name, weight, price }; try { if (id) { await materialsCollection.doc(id).set(materialData, { merge: true }); } else { await materialsCollection.add(materialData); } closeModal(materialModal); } catch (error) { console.error(error); } });
+            document.getElementById('add-recipe-btn').addEventListener('click', () => { const form = recipeModal.querySelector('form'); form.reset(); recipeModal.dataset.editingId = ''; recipeModal.querySelector('h3').textContent = 'Nueva Receta'; form.querySelector('#ingredients-container').innerHTML = ''; openModal(recipeModal); });
+            recipesList.addEventListener('click', e => { const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; const recipe = recipes.find(r => r.id === id); if (!recipe) return; if (action === 'edit-recipe') { const form = recipeModal.querySelector('form'); form.reset(); form.querySelector('#recipe-name').value = recipe.name; form.querySelector('#recipe-sale-price').value = recipe.salePrice; form.querySelector('#recipe-image-url').value = recipe.imageUrl || ''; form.querySelector('#recipe-cooking-time').value = recipe.cookingTime || ''; const container = form.querySelector('#ingredients-container'); container.innerHTML = ''; (recipe.ingredients || []).forEach(ing => { const material = materials.find(m => m.id === ing.materialId); if (material) addIngredientToRecipeForm(material, ing.grams, container); }); recipeModal.dataset.editingId = id; recipeModal.querySelector('h3').textContent = 'Editar Receta'; openModal(recipeModal); } else if (action === 'delete-recipe') { if (!confirm('¿Seguro?')) return; const batch = db.batch(); orders.forEach(order => { const newItems = (order.items || []).filter(item => item.recipeId !== id); if (newItems.length < (order.items || []).length) { if (newItems.length === 0) { batch.delete(ordersCollection.doc(order.id)); } else { batch.update(ordersCollection.doc(order.id), { items: newItems }); } } }); batch.commit().then(() => { recipesCollection.doc(id).delete(); }); } });
+            recipeModal.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); const id = recipeModal.dataset.editingId; const name = e.target.querySelector('#recipe-name').value; const salePrice = parseFloat(e.target.querySelector('#recipe-sale-price').value); const imageUrl = e.target.querySelector('#recipe-image-url').value; const cookingTime = parseInt(e.target.querySelector('#recipe-cooking-time').value) || 0; const ingredientRows = e.target.querySelectorAll('.ingredient-row'); const ingredients = Array.from(ingredientRows).map(row => ({ materialId: row.dataset.materialId, grams: parseFloat(row.querySelector('.ingredient-grams').value) })).filter(ing => ing.materialId && ing.grams); if (ingredients.length === 0) return alert('Debe agregar al menos un ingrediente.'); const recipeData = { name, salePrice, imageUrl, cookingTime, ingredients, isAffected: false }; try { if (id) { await recipesCollection.doc(id).set(recipeData, { merge: true }); } else { await recipesCollection.add(recipeData); } closeModal(recipeModal); } catch (error) { console.error(error); } });
+            const ingredientSearchInput = document.getElementById('ingredient-search'); const ingredientSearchResults = document.getElementById('ingredient-search-results');
+            function displayIngredientResults(query = ''){ const lowerCaseQuery = query.toLowerCase(); ingredientSearchResults.innerHTML = ''; materials.filter(m => m.name.toLowerCase().includes(lowerCaseQuery)).forEach(material => { const item = document.createElement('div'); item.className = 'p-2 cursor-pointer hover:bg-stone-100'; item.textContent = material.name; item.onclick = () => { const grams = prompt(`¿Cuántos gramos de ${material.name}?`); if (grams && !isNaN(grams) && parseFloat(grams) > 0) { addIngredientToRecipeForm(material, parseFloat(grams), document.getElementById('ingredients-container')); } ingredientSearchInput.value = ''; ingredientSearchResults.innerHTML = ''; }; ingredientSearchResults.appendChild(item); }); }
+            ingredientSearchInput.addEventListener('keyup', e => displayIngredientResults(e.target.value));
+            ingredientSearchInput.addEventListener('focus', () => displayIngredientResults(ingredientSearchInput.value));
+            document.addEventListener('click', (e) => { if (!ingredientSearchInput.contains(e.target) && !ingredientSearchResults.contains(e.target)) { ingredientSearchResults.innerHTML = ''; } });
+            function addIngredientToRecipeForm(material, grams, container) { const row = document.createElement('div'); row.className = 'ingredient-row flex items-center justify-between p-2 bg-gray-50 rounded-md'; row.dataset.materialId = material.id; row.innerHTML = `<span>${material.name}</span><div class="flex items-center gap-2"><input type="number" value="${grams}" class="ingredient-grams w-24 text-right p-1 border rounded" required min="0.1" step="0.1"><span>gr</span><button type="button" class="text-red-500 font-bold">X</button></div>`; row.querySelector('button').onclick = () => row.remove(); container.appendChild(row); }
+            document.getElementById('add-order-btn').addEventListener('click', () => { newOrderModalEl.items = []; renderTempOrderItems(); newOrderModalEl.querySelector('form').reset(); openModal(newOrderModalEl); });
+            const orderRecipeSearchInput = document.getElementById('order-recipe-search'); const orderRecipeSearchResults = document.getElementById('order-recipe-search-results');
+            function displayOrderRecipeResults(query = '') { const lowerCaseQuery = query.toLowerCase(); orderRecipeSearchResults.innerHTML = ''; const filteredRecipes = recipes.filter(r => r.name.toLowerCase().includes(lowerCaseQuery) && !newOrderModalEl.items.some(i => i.recipeId === r.id)); if (filteredRecipes.length === 0) { orderRecipeSearchResults.innerHTML = `<div class="p-2 text-stone-500">No hay más recetas.</div>`; } else { filteredRecipes.forEach(recipe => { const item = document.createElement('div'); item.className = 'p-2 cursor-pointer hover:bg-stone-100'; item.textContent = recipe.name; item.onclick = () => { newOrderModalEl.items.push({ recipeId: recipe.id, quantity: 1 }); renderTempOrderItems(); orderRecipeSearchInput.value = ''; orderRecipeSearchResults.innerHTML = ''; }; orderRecipeSearchResults.appendChild(item); }); } }
+            orderRecipeSearchInput.addEventListener('keyup', e => displayOrderRecipeResults(e.target.value));
+            orderRecipeSearchInput.addEventListener('focus', () => displayOrderRecipeResults(orderRecipeSearchInput.value));
+            document.addEventListener('click', (e) => { if (!orderRecipeSearchInput.contains(e.target) && !orderRecipeSearchResults.contains(e.target)) { orderRecipeSearchResults.innerHTML = ''; } });
+            function renderTempOrderItems() { const container = document.getElementById('order-selected-recipes'); container.innerHTML = ''; if (newOrderModalEl.items.length === 0) { container.innerHTML = `<p class="text-stone-500 text-center py-4">Busca y agrega productos.</p>`; return; } newOrderModalEl.items.forEach((item, index) => { const recipe = recipes.find(r => r.id === item.recipeId); const div = document.createElement('div'); div.className = 'flex items-center justify-between p-2 bg-gray-50 rounded'; div.innerHTML = `<div class="flex items-center gap-2"><input type="number" min="1" value="${item.quantity}" class="w-16 p-1 border rounded order-item-quantity" data-index="${index}"><label>${recipe.name}</label></div><button type="button" class="text-red-500 font-bold order-item-remove" data-index="${index}">X</button>`; container.appendChild(div); }); }
+            document.getElementById('order-selected-recipes').addEventListener('change', e => { if (e.target.classList.contains('order-item-quantity')) { const index = parseInt(e.target.dataset.index); const quantity = parseInt(e.target.value); if (quantity > 0) newOrderModalEl.items[index].quantity = quantity; } });
+            document.getElementById('order-selected-recipes').addEventListener('click', e => { if (e.target.classList.contains('order-item-remove')) { const index = parseInt(e.target.dataset.index); newOrderModalEl.items.splice(index, 1); renderTempOrderItems(); } });
+            newOrderModalEl.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); const customerName = e.target.querySelector('#customer-name').value; const customerPhone = e.target.querySelector('#customer-phone').value; const deliveryDate = e.target.querySelector('#delivery-date').value; if (newOrderModalEl.items.length === 0) return alert('Debes seleccionar al menos un producto.'); try { await ordersCollection.add({ customerName, customerPhone, deliveryDate, items: newOrderModalEl.items, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); closeModal(newOrderModalEl); } catch (error) { console.error(error); } });
+            ordersContainer.addEventListener('click', e => {
+                const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; const order = orders.find(o => o.id === id); if (!order) return;
+                if (action === 'delete-order') { if (!confirm('¿Seguro?')) return; ordersCollection.doc(id).delete(); }
+                else if (action === 'complete-order') {
+                    if (!confirm('¿Marcar este pedido como completado?')) return;
+                    
+                    animatingOrderId = id;
+                    const card = document.getElementById(`order-${id}`);
+                    const overlay = card.querySelector('.completion-overlay');
+                    
+                    const itemsWithData = (order.items || []).map(item => { const recipe = recipes.find(r => r.id === item.recipeId); return { ...item, name: recipe ? recipe.name : "Receta eliminada", salePrice: recipe ? recipe.salePrice : 0 }; });
+                    const completedOrderData = { ...order, items: itemsWithData, completedAt: firebase.firestore.FieldValue.serverTimestamp() };
+                    delete completedOrderData.id;
+
+                    const batch = db.batch();
+                    const newCompletedRef = completedOrdersCollection.doc();
+                    batch.set(newCompletedRef, completedOrderData);
+                    batch.delete(ordersCollection.doc(id));
+                    
+                    batch.commit().then(() => {
+                        overlay.classList.add('active');
+                         setTimeout(() => {
+                            animatingOrderId = null;
+                        }, 3000);
+                    }).catch(err => {
+                        console.error("Error al completar el pedido:", err);
+                        alert("No se pudo completar el pedido. Asegúrate de haber actualizado las Reglas de Seguridad en Firebase.");
+                        animatingOrderId = null;
+                    });
+                }
+                else if (action === 'toggle-materials') { const materialsEl = button.closest('.order-card').querySelector('.order-materials'); const isHidden = materialsEl.classList.contains('hidden'); if (isHidden) { const totalIngredients = {}; (order.items || []).forEach(item => { const recipe = recipes.find(r => r.id === item.recipeId); if (!recipe) return; (recipe.ingredients || []).forEach(ing => { const material = materials.find(m => m.id === ing.materialId); if (!material) return; if (!totalIngredients[material.name]) totalIngredients[material.name] = 0; totalIngredients[material.name] += ing.grams * item.quantity; }); }); materialsEl.innerHTML = `<h5 class="font-bold mb-2">Materiales para este pedido:</h5><ul class="space-y-1 list-disc list-inside">${Object.keys(totalIngredients).sort().map(name => `<li><strong>${name}:</strong> ${totalIngredients[name].toFixed(0)} gr</li>`).join('') || '<li>Sin materiales.</li>'}</ul>`; } materialsEl.classList.toggle('hidden'); button.querySelector('svg').classList.toggle('rotate-180'); }
+                else if (action === 'edit-order') { const form = editOrderModal.querySelector('form'); form.querySelector('#edit-order-id').value = order.id; form.querySelector('#edit-customer-name').value = order.customerName; form.querySelector('#edit-customer-phone').value = order.customerPhone; form.querySelector('#edit-delivery-date').value = order.deliveryDate; openModal(editOrderModal); }
+            });
+            editOrderModal.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); const id = e.target.querySelector('#edit-order-id').value; const customerName = e.target.querySelector('#edit-customer-name').value; const customerPhone = e.target.querySelector('#edit-customer-phone').value; const deliveryDate = e.target.querySelector('#edit-delivery-date').value; try { await ordersCollection.doc(id).update({ customerName, customerPhone, deliveryDate }); closeModal(editOrderModal); } catch (error) { console.error(error); } });
+            
+            async function renderHistory() {
+                historyContent.innerHTML = '<p>Cargando historial...</p>';
+                try {
+                    const snapshot = await completedOrdersCollection.orderBy("completedAt", "desc").get();
+                    if (snapshot.empty) { historyContent.innerHTML = '<p>No hay ventas en el historial.</p>'; return; }
+                    historyContent.innerHTML = snapshot.docs.map(doc => {
+                        const order = {id: doc.id, ...doc.data()};
+                        let totalSale = 0;
+                        const itemsHtml = (order.items || []).map(item => { totalSale += (item.salePrice || 0) * item.quantity; return `<li class="text-sm">${item.quantity} x ${item.name || 'Receta eliminada'}</li>`; }).join('');
+                        return `<div class="p-4 border rounded-lg mb-2"><div class="flex justify-between"><div><p class="font-bold">${order.customerName}</p><p class="text-xs text-gray-500">Completado: ${new Date(order.completedAt.toDate()).toLocaleString('es-AR')}</p></div><div class="flex items-center gap-2"><p class="font-bold">${formatCurrency(totalSale)}</p><button class="btn text-xs bg-yellow-100 text-yellow-800 hover:bg-yellow-200" data-action="uncomplete-order" data-id="${order.id}">Cancelar</button></div></div><ul class="list-disc list-inside mt-2">${itemsHtml}</ul></div>`;
+                    }).join('');
+                } catch (error) { console.error("Error al cargar historial:", error); historyContent.innerHTML = '<p class="text-red-500">No se pudo cargar el historial.</p>'; }
+            }
+            historyContent.addEventListener('click', e => {
+                 const button = e.target.closest('button'); if (!button || button.dataset.action !== 'uncomplete-order') return;
+                 const id = button.dataset.id;
+                 if(!confirm('¿Seguro que quieres mover este pedido de vuelta a "Pedidos Activos"?')) return;
+                 completedOrdersCollection.doc(id).get().then(doc => {
+                    if (doc.exists) {
+                        const orderData = doc.data();
+                        const activeOrderData = {
+                            customerName: orderData.customerName,
+                            customerPhone: orderData.customerPhone,
+                            deliveryDate: orderData.deliveryDate,
+                            items: (orderData.items || []).map(item => ({recipeId: item.recipeId, quantity: item.quantity})),
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        ordersCollection.add(activeOrderData).then(() => {
+                            completedOrdersCollection.doc(id).delete();
+                            showSection('pedidos');
+                        });
+                    }
+                 });
+            });
+        }
+    });
+    </script>
+</body>
+</html>
+

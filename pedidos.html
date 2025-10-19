@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hacer un Pedido | Mi Panadería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Scripts de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #FBF9F6; color: #402E32; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05); }
+        .btn { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 500; transition: all 0.2s ease-in-out; cursor: pointer; }
+        .btn-primary { background-color: #A97C50; color: white; }
+        .btn-primary:hover { background-color: #8C6239; }
+        .btn-secondary { background-color: #D6C3B3; color: #402E32; font-weight: 600; }
+        .btn-secondary:hover { background-color: #C1A892; }
+        input[type="text"], input[type="tel"] { border-radius: 0.5rem; border: 1px solid #D6C3B3; padding: 0.75rem; width: 100%; }
+        input:focus { outline: none; border-color: #A97C50; box-shadow: 0 0 0 2px rgba(169, 124, 80, 0.3); }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(251, 249, 246, 0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.3s; }
+        .modal-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.5); padding: 1rem; }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-overlay">
+        <svg class="animate-spin h-8 w-8 text-[#A97C50]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center my-8 md:my-12">
+            <h1 class="text-4xl md:text-5xl font-serif text-[#402E32]">Nuestros Productos Artesanales</h1>
+            <p class="text-lg text-stone-600 mt-2">Elige tus favoritos y haz tu pedido.</p>
+        </header>
+
+        <div id="recipe-menu" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Las recetas se cargarán aquí -->
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
+            <div class="lg:col-span-2">
+                <div class="card p-6">
+                    <h2 class="text-2xl font-serif text-stone-800 mb-4">Completa tus Datos</h2>
+                    <form id="order-form" class="space-y-4">
+                        <div>
+                            <label for="client-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre y Apellido</label>
+                            <input type="text" id="client-name" required placeholder="Tu nombre">
+                        </div>
+                         <div>
+                            <label for="client-phone" class="block text-sm font-medium text-stone-600 mb-1">Número de Teléfono</label>
+                            <input type="tel" id="client-phone" required placeholder="Para contactarte">
+                        </div>
+                        <button type="submit" id="submit-order-btn" class="btn btn-primary w-full !py-3 !text-base">Enviar Pedido</button>
+                    </form>
+                </div>
+            </div>
+            <div>
+                <div class="card p-6 sticky top-8">
+                    <h2 class="text-2xl font-serif text-stone-800 mb-4">Tu Pedido</h2>
+                    <div id="cart-items" class="space-y-3 mb-4 max-h-60 overflow-y-auto pr-2">
+                        <p class="text-stone-500">Tu carrito está vacío.</p>
+                    </div>
+                    <div class="border-t border-stone-200 pt-4 flex justify-between items-center">
+                        <span class="text-lg font-bold text-stone-800">Total:</span>
+                        <span id="cart-total" class="text-xl font-bold text-stone-800">$0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="success-modal" class="modal-container hidden">
+        <div class="card text-center p-8 max-w-sm mx-auto">
+            <h2 class="text-2xl font-serif text-green-600 mb-4">¡Pedido Enviado!</h2>
+            <p class="text-stone-600 mb-6">Gracias por tu pedido. Te contactaremos a la brevedad para confirmar.</p>
+            <button id="close-success-modal" class="btn btn-primary">Aceptar</button>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const firebaseConfig = {
+            apiKey: "AIzaSyBY-BS1UfJjTcaQWBkqLfcIT6sCngfaCmU",
+            authDomain: "mi-panaderia-online.firebaseapp.com",
+            projectId: "mi-panaderia-online",
+            storageBucket: "mi-panaderia-online.firebasestorage.app",
+            messagingSenderId: "880103240107",
+            appId: "1:880103240107:web:7aef22bea8abdeae7fa2ee"
+        };
+
+        try { firebase.initializeApp(firebaseConfig); } catch (e) { console.error("Firebase ya fue inicializado."); }
+        
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const recipesCollection = db.collection('recipes');
+        const ordersCollection = db.collection('orders');
+
+        let recipes = []; let cart = [];
+
+        const loadingEl = document.getElementById('loading');
+        const recipeMenuEl = document.getElementById('recipe-menu');
+        const cartItemsEl = document.getElementById('cart-items');
+        const cartTotalEl = document.getElementById('cart-total');
+        const orderForm = document.getElementById('order-form');
+        const submitOrderBtn = document.getElementById('submit-order-btn');
+        const successModal = document.getElementById('success-modal');
+        const closeSuccessModalBtn = document.getElementById('close-success-modal');
+        
+        const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount || 0);
+
+        function renderMenu() {
+            recipeMenuEl.innerHTML = '';
+            if (recipes.length === 0) {
+                recipeMenuEl.innerHTML = '<p class="text-center text-stone-500 md:col-span-2 lg:col-span-3">No hay productos disponibles.</p>';
+                return;
+            }
+            recipes.forEach(recipe => {
+                const card = document.createElement('div');
+                card.className = 'card flex flex-col overflow-hidden transform hover:-translate-y-1 transition-transform duration-300';
+                const imageUrl = recipe.imageUrl || `https://placehold.co/600x400/FBF9F6/402E32?text=${encodeURIComponent(recipe.name)}`;
+                card.innerHTML = `
+                    <img src="${imageUrl}" alt="${recipe.name}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/FBF9F6/402E32?text=Imagen%20no%20disponible';">
+                    <div class="p-4 flex flex-col flex-grow">
+                        <h3 class="text-xl font-serif text-stone-800">${recipe.name}</h3>
+                        <p class="text-lg font-medium text-[#A97C50] mt-1">${formatCurrency(recipe.salePrice)}</p>
+                        <div class="flex items-center gap-2 mt-4 pt-4 border-t border-stone-100">
+                            <input type="number" value="1" min="1" class="w-16 p-2 border rounded-md text-center" data-quantity-id="${recipe.id}">
+                            <button class="btn btn-secondary flex-grow" data-id="${recipe.id}">Agregar</button>
+                        </div>
+                    </div>
+                `;
+                recipeMenuEl.appendChild(card);
+            });
+        }
+        
+        function renderCart() {
+            cartItemsEl.innerHTML = '';
+            if (cart.length === 0) {
+                 cartItemsEl.innerHTML = '<p class="text-stone-500">Tu carrito está vacío.</p>';
+                 cartTotalEl.textContent = formatCurrency(0);
+                 return;
+            }
+            let total = 0;
+            cart.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'flex justify-between items-center animate-pulse once';
+                itemEl.innerHTML = `
+                    <div>
+                        <span class="font-medium text-stone-700">${item.name}</span>
+                        <div class="flex items-center gap-2">
+                            <button class="text-lg font-bold p-1 text-stone-400 hover:text-red-500" data-action="decrease" data-id="${item.recipeId}">-</button>
+                            <span class="text-sm font-bold">${item.quantity}</span>
+                            <button class="text-lg font-bold p-1 text-stone-400 hover:text-green-500" data-action="increase" data-id="${item.recipeId}">+</button>
+                        </div>
+                    </div>
+                    <span class="font-medium">${formatCurrency(item.salePrice * item.quantity)}</span>
+                `;
+                cartItemsEl.appendChild(itemEl);
+                total += item.salePrice * item.quantity;
+            });
+            cartTotalEl.textContent = formatCurrency(total);
+        }
+        
+        function addToCart(recipeId, quantity) {
+            const recipe = recipes.find(r => r.id === recipeId);
+            if (!recipe || quantity < 1) return;
+            const existingItem = cart.find(item => item.recipeId === recipeId);
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                cart.push({ recipeId: recipe.id, name: recipe.name, quantity, salePrice: recipe.salePrice });
+            }
+            renderCart();
+        }
+        
+        function updateCartQuantity(recipeId, action) {
+             const itemIndex = cart.findIndex(item => item.recipeId === recipeId);
+             if (itemIndex === -1) return;
+             if (action === 'increase') { cart[itemIndex].quantity++; }
+             else if (action === 'decrease') {
+                 cart[itemIndex].quantity--;
+                 if (cart[itemIndex].quantity === 0) { cart.splice(itemIndex, 1); }
+             }
+             renderCart();
+        }
+
+        function loadRecipes() {
+            recipesCollection.onSnapshot(snapshot => {
+                recipes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderMenu();
+                loadingEl.classList.add('hidden');
+            }, error => { console.error("Error al cargar recetas:", error); loadingEl.classList.add('hidden'); recipeMenuEl.innerHTML = '<p class="text-center text-red-500">No se pudieron cargar los productos.</p>'; });
+        }
+        
+        async function handleOrderSubmit(e) {
+            e.preventDefault();
+            if (cart.length === 0) { alert("Tu carrito está vacío."); return; }
+            submitOrderBtn.disabled = true; submitOrderBtn.textContent = "Enviando...";
+            const orderData = {
+                customerName: document.getElementById('client-name').value,
+                customerPhone: document.getElementById('client-phone').value,
+                deliveryDate: '',
+                items: cart.map(item => ({ recipeId: item.recipeId, quantity: item.quantity })),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            try { await ordersCollection.add(orderData); successModal.classList.remove('hidden'); }
+            catch (error) { console.error("Error al enviar el pedido:", error); alert("Hubo un problema al enviar tu pedido."); }
+            finally { submitOrderBtn.disabled = false; submitOrderBtn.textContent = "Enviar Pedido"; }
+        }
+        
+        recipeMenuEl.addEventListener('click', e => {
+            if (e.target.tagName === 'BUTTON') {
+                const recipeId = e.target.dataset.id;
+                const quantityInput = e.target.previousElementSibling;
+                const quantity = parseInt(quantityInput.value);
+                addToCart(recipeId, quantity);
+                e.target.textContent = "¡Agregado!";
+                quantityInput.value = 1;
+                setTimeout(() => { e.target.textContent = "Agregar"; }, 1000);
+            }
+        });
+        
+        cartItemsEl.addEventListener('click', e => { if (e.target.tagName === 'BUTTON') { const action = e.target.dataset.action; const recipeId = e.target.dataset.id; updateCartQuantity(recipeId, action); } });
+        orderForm.addEventListener('submit', handleOrderSubmit);
+        closeSuccessModalBtn.addEventListener('click', () => { successModal.classList.add('hidden'); cart = []; renderCart(); orderForm.reset(); });
+
+        auth.onAuthStateChanged(user => {
+            if (!user) { auth.signInAnonymously().catch(error => console.error("Fallo el inicio de sesión anónimo:", error)); }
+            else { loadRecipes(); }
+        });
+    });
+    </script>
+</body>
+</html>
+
