@@ -269,30 +269,25 @@
                 if (action === 'delete-order') { if (!confirm('¿Seguro?')) return; await ordersCollection.doc(id).delete(); }
                 else if (action === 'complete-order') {
                     if (!confirm('¿Marcar este pedido como completado?')) return;
-
+                    
+                    const card = document.getElementById(`order-${id}`);
+                    const overlay = card.querySelector('.completion-overlay');
+                    
                     const itemsWithData = (order.items || []).map(item => { const recipe = recipes.find(r => r.id === item.recipeId); return { ...item, name: recipe ? recipe.name : "Receta eliminada", salePrice: recipe ? recipe.salePrice : 0 }; });
                     const completedOrderData = { ...order, items: itemsWithData, completedAt: firebase.firestore.FieldValue.serverTimestamp() };
                     delete completedOrderData.id;
 
-                    try {
-                        const batch = db.batch();
-                        batch.set(completedOrdersCollection.doc(), completedOrderData);
-                        batch.delete(ordersCollection.doc(id));
-                        await batch.commit();
-                        
-                        // Animación solo si el commit fue exitoso
-                        const card = document.getElementById(`order-${id}`);
-                        if (card) {
-                            card.classList.add('completing');
-                            setTimeout(() => {
-                                card.remove();
-                                renderAll();
-                            }, 500); // Coincide con la duración de la transición en CSS
-                        }
-                    } catch (error) {
-                        console.error("Error al completar el pedido:", error);
+                    const batch = db.batch();
+                    const newCompletedRef = completedOrdersCollection.doc();
+                    batch.set(newCompletedRef, completedOrderData);
+                    batch.delete(ordersCollection.doc(id));
+                    
+                    batch.commit().then(() => {
+                        overlay.classList.add('active');
+                    }).catch(err => {
+                        console.error("Error al completar el pedido:", err);
                         alert("No se pudo completar el pedido. Asegúrate de haber actualizado las Reglas de Seguridad en Firebase.");
-                    }
+                    });
                 }
                 else if (action === 'toggle-materials') { const materialsEl = button.closest('.order-card').querySelector('.order-materials'); const isHidden = materialsEl.classList.contains('hidden'); if (isHidden) { const totalIngredients = {}; (order.items || []).forEach(item => { const recipe = recipes.find(r => r.id === item.recipeId); if (!recipe) return; (recipe.ingredients || []).forEach(ing => { const material = materials.find(m => m.id === ing.materialId); if (!material) return; if (!totalIngredients[material.name]) totalIngredients[material.name] = 0; totalIngredients[material.name] += ing.grams * item.quantity; }); }); materialsEl.innerHTML = `<h5 class="font-bold mb-2">Materiales para este pedido:</h5><ul class="space-y-1 list-disc list-inside">${Object.keys(totalIngredients).sort().map(name => `<li><strong>${name}:</strong> ${totalIngredients[name].toFixed(0)} gr</li>`).join('') || '<li>Sin materiales.</li>'}</ul>`; } materialsEl.classList.toggle('hidden'); button.querySelector('svg').classList.toggle('rotate-180'); }
                 else if (action === 'edit-order') { const form = editOrderModal.querySelector('form'); form.querySelector('#edit-order-id').value = order.id; form.querySelector('#edit-customer-name').value = order.customerName; form.querySelector('#edit-customer-phone').value = order.customerPhone; form.querySelector('#edit-delivery-date').value = order.deliveryDate; openModal(editOrderModal); }
