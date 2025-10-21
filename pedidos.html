@@ -8,7 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Scripts de Firebase --><script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <!-- Scripts de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #FDFBF8; }
@@ -28,7 +29,7 @@
             justify-content: center;
             overflow-y: auto;
             padding: 1rem;
-            background-color: rgba(0,0,0,0.6); /* Fondo semi-transparente para modales */
+            background-color: rgba(0,0,0,0.6);
         }
         .modal-container.hidden { display: none; }
         .modal-content {
@@ -39,20 +40,19 @@
             position: relative;
             z-index: 50;
             width: 90%;
-            max-width: 700px; /* Ancho máximo para la publicación */
+            max-width: 700px;
             margin: auto;
         }
 
-        /* Carousel styles for product cards */
         .product-card-carousel {
             position: relative;
             width: 100%;
-            height: 150px; /* Fixed height for consistency */
+            height: 150px;
             overflow: hidden;
             border-top-left-radius: 0.75rem;
             border-top-right-radius: 0.75rem;
             margin-bottom: 0.75rem;
-            cursor: pointer; /* Indicates it's clickable */
+            cursor: pointer;
         }
         .product-card-carousel-track {
             display: flex;
@@ -65,12 +65,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #f0f0f0; /* Placeholder background */
+            background-color: #f0f0f0;
         }
         .product-card-carousel-slide img {
             max-width: 100%;
             max-height: 100%;
-            object-fit: contain; /* Ensures image fits without cropping */
+            object-fit: cover;
         }
         .carousel-nav-btn {
             position: absolute;
@@ -93,11 +93,10 @@
         .carousel-nav-btn.left { left: 0.5rem; }
         .carousel-nav-btn.right { right: 0.5rem; }
 
-        /* Styles for the "Publication" Modal */
         .publication-carousel-container {
             position: relative;
             width: 100%;
-            height: 300px; /* Larger height for publication modal */
+            height: 300px;
             overflow: hidden;
             border-radius: 0.75rem;
             background-color: #f0f0f0;
@@ -177,7 +176,7 @@
         </div>
     </div>
 
-    <!-- Cart Modal --><div id="cart-modal" class="modal-container hidden">
+    <div id="cart-modal" class="modal-container hidden">
         <div class="modal-content max-w-lg">
             <h2 class="text-2xl font-bold text-stone-700 mb-4">Tu Pedido</h2>
             <div id="cart-items" class="space-y-4 max-h-96 overflow-y-auto pr-2">
@@ -198,23 +197,9 @@
                         <input type="tel" id="customer-phone" placeholder="Ej: 1123456789" class="w-full">
                     </div>
                     <div>
-                        <label for="delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha de Entrega</label>
-                        <input type="date" id="delivery-date" required class="w-full">
-                    </div>
-                    <div>
-                        <label for="delivery-time-slot" class="block text-sm font-medium text-stone-600 mb-1">Franja Horaria de Entrega</label>
-                        <select id="delivery-time-slot" class="w-full">
-                            <option value="Cualquier horario">Cualquier horario</option>
-                            <option value="Mañana (9-13hs)">Mañana (9-13hs)</option>
-                            <option value="Tarde (14-18hs)">Tarde (14-18hs)</option>
-                            <option value="Tarde (18-21hs)">Tarde (18-21hs)</option>
-                        </select>
-                    </div>
-                    <div>
                         <label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label>
                         <div class="flex flex-wrap gap-x-4 gap-y-2">
-                            <label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin asignar" class="mr-1" checked>Sin asignar</label>
-                            <label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin cortar" class="mr-1">Sin cortar</label>
+                            <label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin cortar" class="mr-1" checked>Sin cortar</label>
                             <label class="flex items-center text-sm"><input type="radio" name="slicing" value="Cortado" class="mr-1">Cortado</label>
                         </div>
                     </div>
@@ -227,18 +212,16 @@
         </div>
     </div>
 
-    <!-- Publication Modal --><div id="publication-modal" class="modal-container hidden">
+    <div id="publication-modal" class="modal-container hidden">
         <div class="modal-content max-w-2xl !p-0">
             <button class="close-modal-btn" id="close-publication-modal">&times;</button>
             <div class="grid grid-cols-1 md:grid-cols-2 h-full">
-                <!-- Publication Carousel Container --><div class="publication-carousel-container flex-shrink-0 md:h-auto h-64">
-                    <div id="publication-carousel-track" class="publication-carousel-track">
-                        <!-- Dynamic slides here --></div>
+                <div class="publication-carousel-container flex-shrink-0 md:h-auto h-64">
+                    <div id="publication-carousel-track" class="publication-carousel-track"></div>
                     <button type="button" class="publication-modal-arrow left" id="publication-carousel-prev">&#10094;</button>
                     <button type="button" class="publication-modal-arrow right" id="publication-carousel-next">&#10095;</button>
                 </div>
-
-                <!-- Publication Details --><div class="p-4 md:p-6 flex flex-col justify-between">
+                <div class="p-4 md:p-6 flex flex-col justify-between">
                     <div>
                         <h3 id="publication-recipe-name" class="text-2xl font-bold text-stone-700 mb-2"></h3>
                         <p id="publication-recipe-description" class="text-stone-600 text-sm mb-4"></p>
@@ -277,8 +260,7 @@
             const cartTotalEl = document.getElementById('cart-total');
             const cartItemCountEl = document.getElementById('cart-item-count');
             const submitOrderBtn = document.getElementById('submit-order-btn');
-
-            // Publication Modal elements
+            
             const publicationModal = document.getElementById('publication-modal');
             const closePublicationModalBtn = document.getElementById('close-publication-modal');
             const publicationCarouselTrack = document.getElementById('publication-carousel-track');
@@ -291,11 +273,10 @@
             const publicationAddToCartBtn = document.getElementById('publication-add-to-cart-btn');
 
             let cart = JSON.parse(localStorage.getItem('bakeryCart')) || [];
-            let recipes = []; // To store all recipes
+            let recipes = [];
 
             const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount || 0);
 
-            // --- Product Listing and Card Carousel Logic ---
             function renderProducts() {
                 productsContainer.innerHTML = '<p class="text-center text-stone-500 col-span-full">Cargando productos...</p>';
                 recipesCollection.orderBy('name').onSnapshot(snapshot => {
@@ -309,31 +290,22 @@
                     recipes.forEach(recipe => {
                         const productCard = document.createElement('div');
                         productCard.className = 'card pb-4';
-                        productCard.dataset.recipeId = recipe.id; // Store recipe ID
+                        productCard.dataset.recipeId = recipe.id;
 
                         const imageUrls = recipe.imageUrls || [];
-                        const firstImage = imageUrls[0] || 'https://via.placeholder.com/150?text=Sin+Imagen'; // Default placeholder
+                        const firstImage = imageUrls[0] || 'https://via.placeholder.com/300x200?text=Sin+Imagen';
 
-                        let carouselHtml = '';
-                        if (imageUrls.length > 0) {
-                            carouselHtml = `
-                                <div class="product-card-carousel" data-recipe-id="${recipe.id}">
-                                    <div class="product-card-carousel-track">
-                                        ${imageUrls.map(url => `<div class="product-card-carousel-slide"><img src="${url}" alt="${recipe.name}"></div>`).join('')}
-                                    </div>
-                                    ${imageUrls.length > 1 ? `
-                                        <button type="button" class="carousel-nav-btn left" data-direction="-1">&#10094;</button>
-                                        <button type="button" class="carousel-nav-btn right" data-direction="1">&#10095;</button>
-                                    ` : ''}
+                        let carouselHtml = `
+                            <div class="product-card-carousel" data-recipe-id="${recipe.id}">
+                                <div class="product-card-carousel-track" style="width: ${imageUrls.length * 100}%">
+                                    ${(imageUrls.length > 0 ? imageUrls : [firstImage]).map(url => `<div class="product-card-carousel-slide"><img src="${url}" alt="${recipe.name}"></div>`).join('')}
                                 </div>
-                            `;
-                        } else {
-                            carouselHtml = `
-                                <div class="product-card-carousel flex items-center justify-center" data-recipe-id="${recipe.id}">
-                                    <img src="${firstImage}" alt="${recipe.name}" class="max-w-full max-h-full object-contain">
-                                </div>
-                            `;
-                        }
+                                ${imageUrls.length > 1 ? `
+                                    <button type="button" class="carousel-nav-btn left" data-direction="-1">&#10094;</button>
+                                    <button type="button" class="carousel-nav-btn right" data-direction="1">&#10095;</button>
+                                ` : ''}
+                            </div>
+                        `;
 
                         productCard.innerHTML = `
                             ${carouselHtml}
@@ -349,41 +321,35 @@
                         productsContainer.appendChild(productCard);
                     });
 
-                    // Initialize card carousels
                     productsContainer.querySelectorAll('.product-card-carousel').forEach(initCardCarousel);
                 });
             }
 
             function initCardCarousel(carouselEl) {
                 const track = carouselEl.querySelector('.product-card-carousel-track');
-                const slides = carouselEl.querySelectorAll('.product-card-carousel-slide');
+                const slides = Array.from(carouselEl.querySelectorAll('.product-card-carousel-slide'));
                 const prevBtn = carouselEl.querySelector('.carousel-nav-btn.left');
                 const nextBtn = carouselEl.querySelector('.carousel-nav-btn.right');
                 
                 let currentSlide = 0;
-                if (slides.length <= 1) {
-                    if (prevBtn) prevBtn.style.display = 'none';
-                    if (nextBtn) nextBtn.style.display = 'none';
-                    return;
-                }
+                if (slides.length <= 1) return;
 
                 function updateCarousel() {
-                    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+                    track.style.transform = `translateX(-${currentSlide * (100 / slides.length)}%)`;
                 }
 
                 prevBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent opening publication modal
+                    e.stopPropagation();
                     currentSlide = (currentSlide - 1 + slides.length) % slides.length;
                     updateCarousel();
                 });
 
                 nextBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent opening publication modal
+                    e.stopPropagation();
                     currentSlide = (currentSlide + 1) % slides.length;
                     updateCarousel();
                 });
-
-                // Make the entire card image area clickable to open publication modal
+                
                 carouselEl.addEventListener('click', (e) => {
                     const recipeId = carouselEl.dataset.recipeId;
                     const recipe = recipes.find(r => r.id === recipeId);
@@ -392,7 +358,6 @@
             }
 
 
-            // --- Cart Logic ---
             function updateCartCount() {
                 cartItemCountEl.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
             }
@@ -409,7 +374,7 @@
 
                 cart.forEach(item => {
                     const recipe = recipes.find(r => r.id === item.recipeId);
-                    if (!recipe) return; // Skip if recipe not found
+                    if (!recipe) return;
 
                     const itemTotal = recipe.salePrice * item.quantity;
                     total += itemTotal;
@@ -441,7 +406,7 @@
                 }
                 localStorage.setItem('bakeryCart', JSON.stringify(cart));
                 updateCartCount();
-                renderCartItems(); // Re-render cart in modal if open
+                renderCartItems();
             }
 
             function updateCartItemQuantity(recipeId, newQuantity) {
@@ -450,10 +415,11 @@
                     item.quantity = newQuantity;
                     if (item.quantity <= 0) {
                         removeFromCart(recipeId);
+                    } else {
+                        localStorage.setItem('bakeryCart', JSON.stringify(cart));
+                        updateCartCount();
+                        renderCartItems();
                     }
-                    localStorage.setItem('bakeryCart', JSON.stringify(cart));
-                    updateCartCount();
-                    renderCartItems();
                 }
             }
 
@@ -464,11 +430,11 @@
                 renderCartItems();
             }
 
-            // --- Event Listeners ---
             productsContainer.addEventListener('click', (e) => {
-                if (e.target.classList.contains('add-to-cart-btn')) {
-                    const recipeId = e.target.dataset.recipeId;
-                    const quantityInput = e.target.previousElementSibling; // The input field
+                const addToCartBtn = e.target.closest('.add-to-cart-btn');
+                if (addToCartBtn) {
+                    const recipeId = addToCartBtn.dataset.recipeId;
+                    const quantityInput = addToCartBtn.previousElementSibling;
                     const quantity = parseInt(quantityInput.value);
                     if (quantity > 0) {
                         addToCart(recipeId, quantity);
@@ -480,20 +446,13 @@
             viewCartBtn.addEventListener('click', () => {
                 renderCartItems();
                 cartModal.classList.remove('hidden');
-                // Set default delivery date to tomorrow
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                document.getElementById('delivery-date').value = tomorrow.toISOString().split('T')[0];
             });
 
             closeCartModalBtn.addEventListener('click', () => {
                 cartModal.classList.add('hidden');
             });
-            // Also close cart modal if clicked outside content
             cartModal.addEventListener('click', (e) => {
-                if (e.target === cartModal) {
-                    cartModal.classList.add('hidden');
-                }
+                if (e.target === cartModal) cartModal.classList.add('hidden');
             });
 
             cartItemsContainer.addEventListener('change', (e) => {
@@ -519,13 +478,10 @@
 
                 const customerName = document.getElementById('customer-name').value;
                 const customerPhone = document.getElementById('customer-phone').value;
-                const deliveryDate = document.getElementById('delivery-date').value;
                 const slicingOption = document.querySelector('input[name="slicing"]:checked').value;
-                const deliveryTimeSlot = document.getElementById('delivery-time-slot').value;
 
-
-                if (!customerName || !deliveryDate) {
-                    alert('Por favor, ingresa tu nombre y la fecha de entrega.');
+                if (!customerName) {
+                    alert('Por favor, ingresa tu nombre.');
                     return;
                 }
 
@@ -538,9 +494,9 @@
                     await ordersCollection.add({
                         customerName,
                         customerPhone,
-                        deliveryDate,
+                        deliveryDate: "",
                         slicingOption,
-                        deliveryTimeSlot,
+                        deliveryTimeSlot: "Cualquier horario",
                         items: orderItems,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -564,7 +520,7 @@
                 publicationRecipeNameEl.textContent = recipe.name;
                 publicationRecipeDescriptionEl.textContent = recipe.description || 'Sin descripción.';
                 publicationRecipePriceEl.textContent = formatCurrency(recipe.salePrice || 0);
-                publicationQuantityInput.value = 1; // Reset quantity
+                publicationQuantityInput.value = 1;
 
                 renderPublicationCarousel(recipe.imageUrls || []);
                 publicationModal.classList.remove('hidden');
@@ -572,43 +528,41 @@
 
             function renderPublicationCarousel(imageUrls) {
                 publicationCarouselTrack.innerHTML = '';
-                if (imageUrls.length === 0) {
-                    publicationCarouselTrack.innerHTML = '<div class="publication-carousel-slide"><img src="https://via.placeholder.com/300?text=Sin+Imagen" alt="Sin imagen"></div>';
-                    publicationCarouselPrevBtn.classList.add('hidden');
-                    publicationCarouselNextBtn.classList.add('hidden');
-                } else {
-                    imageUrls.forEach((url, index) => {
-                        const slide = document.createElement('div');
-                        slide.className = 'publication-carousel-slide';
-                        slide.innerHTML = `<img src="${url}" alt="Imagen de ${currentPublicationRecipe.name} ${index + 1}">`;
-                        publicationCarouselTrack.appendChild(slide);
-                    });
-                    publicationCarouselPrevBtn.classList.toggle('hidden', imageUrls.length <= 1);
-                    publicationCarouselNextBtn.classList.toggle('hidden', imageUrls.length <= 1);
-                }
+                const imagesToDisplay = imageUrls.length > 0 ? imageUrls : ['https://via.placeholder.com/300x200?text=Sin+Imagen'];
+
+                imagesToDisplay.forEach((url, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'publication-carousel-slide';
+                    slide.innerHTML = `<img src="${url}" alt="Imagen de ${currentPublicationRecipe.name} ${index + 1}">`;
+                    publicationCarouselTrack.appendChild(slide);
+                });
                 
-                // Adjust track width and initial position
-                publicationCarouselTrack.style.width = `${imageUrls.length > 0 ? imageUrls.length * 100 : 100}%`;
-                currentPublicationSlide = 0; // Reset to first slide
-                updatePublicationCarouselPosition();
+                publicationCarouselTrack.style.width = `${imagesToDisplay.length * 100}%`;
+                publicationCarouselPrevBtn.style.display = imagesToDisplay.length > 1 ? 'flex' : 'none';
+                publicationCarouselNextBtn.style.display = imagesToDisplay.length > 1 ? 'flex' : 'none';
+                
+                currentPublicationSlide = 0;
+                updatePublicationCarouselPosition(imagesToDisplay.length);
             }
 
-            function updatePublicationCarouselPosition() {
-                if (!currentPublicationRecipe || !currentPublicationRecipe.imageUrls || currentPublicationRecipe.imageUrls.length === 0) return;
-                const offset = -currentPublicationSlide * (100 / currentPublicationRecipe.imageUrls.length);
+            function updatePublicationCarouselPosition(totalSlides) {
+                if (totalSlides === 0) return;
+                const offset = -currentPublicationSlide * (100 / totalSlides);
                 publicationCarouselTrack.style.transform = `translateX(${offset}%)`;
             }
-
+            
             publicationCarouselPrevBtn.addEventListener('click', () => {
-                if (!currentPublicationRecipe || !currentPublicationRecipe.imageUrls || currentPublicationRecipe.imageUrls.length === 0) return;
-                currentPublicationSlide = (currentPublicationSlide - 1 + currentPublicationRecipe.imageUrls.length) % currentPublicationRecipe.imageUrls.length;
-                updatePublicationCarouselPosition();
+                const totalSlides = currentPublicationRecipe.imageUrls?.length || 0;
+                if (totalSlides <= 1) return;
+                currentPublicationSlide = (currentPublicationSlide - 1 + totalSlides) % totalSlides;
+                updatePublicationCarouselPosition(totalSlides);
             });
 
             publicationCarouselNextBtn.addEventListener('click', () => {
-                if (!currentPublicationRecipe || !currentPublicationRecipe.imageUrls || currentPublicationRecipe.imageUrls.length === 0) return;
-                currentPublicationSlide = (currentPublicationSlide + 1) % currentPublicationRecipe.imageUrls.length;
-                updatePublicationCarouselPosition();
+                const totalSlides = currentPublicationRecipe.imageUrls?.length || 0;
+                if (totalSlides <= 1) return;
+                currentPublicationSlide = (currentPublicationSlide + 1) % totalSlides;
+                updatePublicationCarouselPosition(totalSlides);
             });
 
             publicationAddToCartBtn.addEventListener('click', () => {
@@ -622,19 +576,11 @@
                 }
             });
 
-            closePublicationModalBtn.addEventListener('click', () => {
-                publicationModal.classList.add('hidden');
-            });
-
-            // Close publication modal if clicked outside content
+            closePublicationModalBtn.addEventListener('click', () => publicationModal.classList.add('hidden'));
             publicationModal.addEventListener('click', (e) => {
-                if (e.target === publicationModal) {
-                    publicationModal.classList.add('hidden');
-                }
+                if (e.target === publicationModal) publicationModal.classList.add('hidden');
             });
 
-
-            // Initial load
             updateCartCount();
             renderProducts();
         });
