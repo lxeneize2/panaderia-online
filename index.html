@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Scripts de Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <!-- Scripts de Firebase --><script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-storage-compat.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #FDFBF8; }
         .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); padding: 1.5rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; }
@@ -23,9 +23,9 @@
         .btn-secondary:hover { background-color: #8D6E63; }
         .btn-danger { background-color: #E57373; color: white; }
         .btn-danger:hover { background-color: #D32F2F; }
-        input, select { border-radius: 0.5rem; border: 1px solid #D1C4E9; padding: 0.5rem; width: 100%; }
+        input, select, textarea { border-radius: 0.5rem; border: 1px solid #D1C4E9; padding: 0.5rem; width: 100%; }
         input[type="radio"] { width: auto; }
-        input:focus, select:focus { outline: none; border-color: #6D4C41; box-shadow: 0 0 0 2px #D1C4E9; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #6D4C41; box-shadow: 0 0 0 2px #D1C4E9; }
         .modal-container.hidden { display: none; }
         .modal-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 1rem; }
         .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); }
@@ -57,6 +57,73 @@
         .actions-cell .btn {
             width: 100%; /* Asegura que ambos botones tengan el mismo ancho */
         }
+
+        /* Carrusel de imágenes en modal de gestión */
+        .image-carousel-container {
+            position: relative;
+            width: 100%;
+            height: 200px; /* Altura fija para el carrusel */
+            overflow: hidden;
+            border-radius: 0.5rem;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        .image-carousel-track {
+            display: flex;
+            transition: transform 0.3s ease-in-out;
+            height: 100%;
+        }
+        .image-carousel-slide {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .image-carousel-slide img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .carousel-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            z-index: 10;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .carousel-arrow.left { left: 0.5rem; }
+        .carousel-arrow.right { right: 0.5rem; }
+        .delete-image-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: rgba(220, 38, 38, 0.7); /* Red-600 con opacidad */
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -64,8 +131,7 @@
         <svg class="animate-spin h-8 w-8 text-stone-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
     </div>
 
-    <!-- PANTALLA DE LOGIN -->
-    <div id="login-container" class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <!-- PANTALLA DE LOGIN --><div id="login-container" class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full space-y-8 card !overflow-visible">
             <div><h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Acceso de Administrador</h2></div>
             <form id="login-form" class="mt-8 space-y-6">
@@ -79,8 +145,7 @@
         </div>
     </div>
 
-    <!-- PANEL DE ADMINISTRACIÓN (Oculto por defecto) -->
-    <div id="admin-panel" class="hidden">
+    <!-- PANEL DE ADMINISTRACIÓN (Oculto por defecto) --><div id="admin-panel" class="hidden">
         <div class="container mx-auto p-4 md:p-8">
             <nav class="card !overflow-visible flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div class="flex flex-wrap items-center justify-center gap-2">
@@ -101,8 +166,7 @@
                         <div class="lg:col-span-3 space-y-6"><div class="card !overflow-visible"><div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"><h2 class="text-2xl font-bold text-stone-700">Pedidos Activos</h2><button id="add-order-btn" class="btn btn-primary w-full sm:w-auto">Crear Nuevo Pedido</button></div><div id="orders-container" class="space-y-4"><p class="text-center text-stone-500">Aún no hay pedidos activos.</p></div></div></div>
                         <div class="lg:col-span-2 space-y-6">
                             <div id="agenda-container" class="card !overflow-visible">
-                                <!-- La agenda semanal se generará aquí -->
-                            </div>
+                                <!-- La agenda semanal se generará aquí --></div>
                             <div class="card !overflow-visible wood-texture text-white"><h3 class="text-xl font-bold mb-2">Costo Total de Producción</h3><p id="total-production-cost" class="text-4xl font-bold">$0.00</p></div>
                             <div class="card !overflow-visible bg-green-600 text-white"><h3 class="text-xl font-bold mb-2">Total a Recaudar</h3><p id="total-revenue" class="text-4xl font-bold">$0.00</p></div>
                             <div class="card !overflow-visible fire-texture text-white"><h3 class="text-xl font-bold mb-2">Tiempo Total de Cocción</h3><p id="total-cooking-time" class="text-4xl font-bold">0 min</p></div>
@@ -126,10 +190,66 @@
         </div>
     </div>
     
-    <!-- Modals -->
-    <div id="material-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 id="material-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3><form id="material-form"><div class="space-y-4"><div><label for="material-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="material-name" required></div><div><label for="material-weight" class="block text-sm font-medium text-stone-600 mb-1">Peso (gr)</label><input type="number" id="material-weight" required></div><div><label for="material-price" class="block text-sm font-medium text-stone-600 mb-1">Precio ($)</label><input type="number" step="0.01" id="material-price" required></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
-    <div id="recipe-modal" class="modal-container hidden">
-        <div class="modal-backdrop"></div><div class="modal-content"><h3 id="recipe-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3><form id="recipe-form"><div class="space-y-4"><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label for="recipe-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="recipe-name" required></div><div><label for="recipe-sale-price" class="block text-sm font-medium text-stone-600 mb-1">Precio Venta ($)</label><input type="number" step="0.01" id="recipe-sale-price" required></div></div><div><label for="recipe-cooking-time" class="block text-sm font-medium text-stone-600 mb-1">Tiempo Cocción (min)</label><input type="number" id="recipe-cooking-time"></div><div><label for="recipe-image-url" class="block text-sm font-medium text-stone-600 mb-1">URL Imagen</label><input type="text" id="recipe-image-url"></div><div class="relative"><label for="ingredient-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Material</label><input type="text" id="ingredient-search"><div id="ingredient-search-results" class="absolute bg-white border z-10 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div></div><div><h4 class="text-md font-medium text-stone-600 mb-2">Ingredientes</h4><div id="ingredients-container" class="space-y-2 border p-2 rounded-md min-h-[50px]"></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
+    <!-- Modals --><div id="material-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 id="material-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3><form id="material-form"><div class="space-y-4"><div><label for="material-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="material-name" required></div><div><label for="material-weight" class="block text-sm font-medium text-stone-600 mb-1">Peso (gr)</label><input type="number" id="material-weight" required></div><div><label for="material-price" class="block text-sm font-medium text-stone-600 mb-1">Precio ($)</label><input type="number" step="0.01" id="material-price" required></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
+    
+    <!-- Recipe Modal (Updated for Image Management) --><div id="recipe-modal" class="modal-container hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <h3 id="recipe-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3>
+            <form id="recipe-form">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div><label for="recipe-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="recipe-name" required></div>
+                        <div><label for="recipe-sale-price" class="block text-sm font-medium text-stone-600 mb-1">Precio Venta ($)</label><input type="number" step="0.01" id="recipe-sale-price" required></div>
+                    </div>
+                    <div><label for="recipe-cooking-time" class="block text-sm font-medium text-stone-600 mb-1">Tiempo Cocción (min)</label><input type="number" id="recipe-cooking-time"></div>
+                    <div><label for="recipe-description" class="block text-sm font-medium text-stone-600 mb-1">Descripción</label><textarea id="recipe-description" rows="3"></textarea></div>
+                    
+                    <!-- Botón para gestionar imágenes --><div class="flex justify-end">
+                        <button type="button" id="manage-images-btn" class="btn btn-secondary">Gestionar Imágenes</button>
+                    </div>
+
+                    <div class="relative">
+                        <label for="ingredient-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Material</label>
+                        <input type="text" id="ingredient-search">
+                        <div id="ingredient-search-results" class="absolute bg-white border z-10 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div>
+                    </div>
+                    <div>
+                        <h4 class="text-md font-medium text-stone-600 mb-2">Ingredientes</h4>
+                        <div id="ingredients-container" class="space-y-2 border p-2 rounded-md min-h-[50px]"></div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-4 mt-6">
+                    <button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Image Management Modal --><div id="image-management-modal" class="modal-container hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content max-w-xl">
+            <h3 class="text-xl font-bold text-stone-700 mb-4">Gestionar Imágenes de Receta</h3>
+            <div id="current-images-display" class="image-carousel-container">
+                <div id="image-carousel-track" class="image-carousel-track">
+                    <!-- Imágenes cargadas dinámicamente aquí --></div>
+                <button type="button" class="carousel-arrow left" id="carousel-prev">&#10094;</button>
+                <button type="button" class="carousel-arrow right" id="carousel-next">&#10095;</button>
+                <p id="no-images-text" class="text-stone-500 hidden">No hay imágenes</p>
+            </div>
+            <div class="mt-4">
+                <label for="image-upload-input" class="block text-sm font-medium text-stone-600 mb-1">Subir nuevas imágenes</label>
+                <input type="file" id="image-upload-input" multiple accept="image/*" class="w-full">
+            </div>
+            <div id="upload-progress" class="mt-2 text-sm text-stone-600 hidden"></div>
+            <div class="flex justify-end gap-4 mt-6">
+                <button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+
     <div id="new-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Crear Pedido</h3><form id="new-order-form"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="customer-name" required></div><div><label for="customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="customer-phone"></div></div><div><label for="delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="delivery-date"></div><div><label for="delivery-time-slot" class="block text-sm font-medium text-stone-600 mb-1">Franja Horaria de Entrega</label><select id="delivery-time-slot"><option value="Cualquier horario">Cualquier horario</option><option value="Mañana (9-13hs)">Mañana (9-13hs)</option><option value="Tarde (14-18hs)">Tarde (14-18hs)</option><option value="Tarde (18-21hs)">Tarde (18-21hs)</option></select></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label><div class="flex items-center gap-x-4"><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin asignar" class="mr-1" checked>Sin asignar</label><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin cortar" class="mr-1">Sin cortar</label><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Cortado" class="mr-1">Cortado</label></div></div><div class="relative"><label for="order-recipe-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Producto</label><input type="text" id="order-recipe-search"><div id="order-recipe-search-results" class="absolute bg-white border z-20 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div></div><div><h4 class="text-md font-medium text-stone-600 mb-2">Productos</h4><div id="order-selected-recipes" class="space-y-2 border p-3 rounded-md min-h-[60px] max-h-48 overflow-y-auto"></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Crear</button></div></form></div></div>
     <div id="order-details-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Materiales del Pedido</h3><div id="order-details-content"></div><div class="flex justify-end mt-6"><button type="button" class="btn-cancel-modal btn btn-primary">Cerrar</button></div></div></div>
     <div id="edit-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Editar Pedido</h3><form id="edit-order-form"><input type="hidden" id="edit-order-id"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="edit-customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="edit-customer-name" required></div><div><label for="edit-customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="edit-customer-phone"></div></div><div><label for="edit-delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="edit-delivery-date"></div><div><label for="edit-delivery-time-slot" class="block text-sm font-medium text-stone-600 mb-1">Franja Horaria de Entrega</label><select id="edit-delivery-time-slot"><option value="Cualquier horario">Cualquier horario</option><option value="Mañana (9-13hs)">Mañana (9-13hs)</option><option value="Tarde (14-18hs)">Tarde (14-18hs)</option><option value="Tarde (18-21hs)">Tarde (18-21hs)</option></select></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label><div class="flex items-center gap-x-4"><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Sin asignar" class="mr-1">Sin asignar</label><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Sin cortar" class="mr-1">Sin cortar</label><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Cortado" class="mr-1">Cortado</label></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
@@ -148,6 +268,7 @@
         
         const db = firebase.firestore();
         const auth = firebase.auth();
+        const storage = firebase.storage(); // Initialize Firebase Storage
 
         const loginContainer = document.getElementById('login-container');
         const adminPanel = document.getElementById('admin-panel');
@@ -188,6 +309,7 @@
             const ordersContainer = document.getElementById('orders-container');
             const materialModal = document.getElementById('material-modal');
             const recipeModal = document.getElementById('recipe-modal');
+            const imageManagementModal = document.getElementById('image-management-modal'); // New modal
             const orderDetailsModal = document.getElementById('order-details-modal');
             const editOrderModal = document.getElementById('edit-order-modal');
             const historyContent = document.getElementById('history-content');
@@ -346,9 +468,85 @@
             document.getElementById('add-material-btn').addEventListener('click', () => { const form = materialModal.querySelector('form'); form.reset(); materialModal.dataset.editingId = ''; materialModal.querySelector('h3').textContent = 'Nuevo Material'; openModal(materialModal); });
             materialsTable.addEventListener('click', e => { const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; if (action === 'edit-material') { const material = materials.find(m => m.id === id); if (!material) return; const form = materialModal.querySelector('form'); form.querySelector('#material-name').value = material.name; form.querySelector('#material-weight').value = material.weight; form.querySelector('#material-price').value = material.price; materialModal.dataset.editingId = id; materialModal.querySelector('h3').textContent = 'Editar Material'; openModal(materialModal); } else if (action === 'delete-material') { if (!confirm('¿Seguro?')) return; const batch = db.batch(); recipes.forEach(recipe => { if ((recipe.ingredients || []).some(ing => ing.materialId === id)) { batch.update(recipesCollection.doc(recipe.id), { isAffected: true }); } }); batch.commit().then(() => { materialsCollection.doc(id).delete(); }); } });
             materialModal.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); const id = materialModal.dataset.editingId; const name = e.target.querySelector('#material-name').value; const weight = parseFloat(e.target.querySelector('#material-weight').value); const price = parseFloat(e.target.querySelector('#material-price').value); const materialData = { name, weight, price }; try { if (id) { await materialsCollection.doc(id).set(materialData, { merge: true }); } else { await materialsCollection.add(materialData); } closeModal(materialModal); } catch (error) { console.error(error); } });
-            document.getElementById('add-recipe-btn').addEventListener('click', () => { const form = recipeModal.querySelector('form'); form.reset(); recipeModal.dataset.editingId = ''; recipeModal.querySelector('h3').textContent = 'Nueva Receta'; form.querySelector('#ingredients-container').innerHTML = ''; openModal(recipeModal); });
-            recipesList.addEventListener('click', e => { const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; const recipe = recipes.find(r => r.id === id); if (!recipe) return; if (action === 'edit-recipe') { const form = recipeModal.querySelector('form'); form.reset(); form.querySelector('#recipe-name').value = recipe.name; form.querySelector('#recipe-sale-price').value = recipe.salePrice; form.querySelector('#recipe-image-url').value = recipe.imageUrl || ''; form.querySelector('#recipe-cooking-time').value = recipe.cookingTime || ''; const container = form.querySelector('#ingredients-container'); container.innerHTML = ''; (recipe.ingredients || []).forEach(ing => { const material = materials.find(m => m.id === ing.materialId); if (material) addIngredientToRecipeForm(material, ing.grams, container); }); recipeModal.dataset.editingId = id; recipeModal.querySelector('h3').textContent = 'Editar Receta'; openModal(recipeModal); } else if (action === 'delete-recipe') { if (!confirm('¿Seguro?')) return; const batch = db.batch(); orders.forEach(order => { const newItems = (order.items || []).filter(item => item.recipeId !== id); if (newItems.length < (order.items || []).length) { if (newItems.length === 0) { batch.delete(ordersCollection.doc(order.id)); } else { batch.update(ordersCollection.doc(order.id), { items: newItems }); } } }); batch.commit().then(() => { recipesCollection.doc(id).delete(); }); } });
-            recipeModal.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); const id = recipeModal.dataset.editingId; const name = e.target.querySelector('#recipe-name').value; const salePrice = parseFloat(e.target.querySelector('#recipe-sale-price').value); const imageUrl = e.target.querySelector('#recipe-image-url').value; const cookingTime = parseInt(e.target.querySelector('#recipe-cooking-time').value) || 0; const ingredientRows = e.target.querySelectorAll('.ingredient-row'); const ingredients = Array.from(ingredientRows).map(row => ({ materialId: row.dataset.materialId, grams: parseFloat(row.querySelector('.ingredient-grams').value) })).filter(ing => ing.materialId && ing.grams); if (ingredients.length === 0) return alert('Debe agregar al menos un ingrediente.'); const recipeData = { name, salePrice, imageUrl, cookingTime, ingredients, isAffected: false }; try { if (id) { await recipesCollection.doc(id).set(recipeData, { merge: true }); } else { await recipesCollection.add(recipeData); } closeModal(recipeModal); } catch (error) { console.error(error); } });
+            document.getElementById('add-recipe-btn').addEventListener('click', () => { const form = recipeModal.querySelector('form'); form.reset(); recipeModal.dataset.editingId = ''; recipeModal.querySelector('h3').textContent = 'Nueva Receta'; form.querySelector('#ingredients-container').innerHTML = ''; currentRecipeImages = []; openModal(recipeModal); });
+            recipesList.addEventListener('click', e => { const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; const recipe = recipes.find(r => r.id === id); if (!recipe) return; if (action === 'edit-recipe') { const form = recipeModal.querySelector('form'); form.reset(); form.querySelector('#recipe-name').value = recipe.name; form.querySelector('#recipe-sale-price').value = recipe.salePrice; form.querySelector('#recipe-cooking-time').value = recipe.cookingTime || ''; form.querySelector('#recipe-description').value = recipe.description || ''; currentRecipeImages = recipe.imageUrls || []; recipeModal.dataset.editingId = id; recipeModal.querySelector('h3').textContent = 'Editar Receta'; const container = form.querySelector('#ingredients-container'); container.innerHTML = ''; (recipe.ingredients || []).forEach(ing => { const material = materials.find(m => m.id === ing.materialId); if (material) addIngredientToRecipeForm(material, ing.grams, container); }); openModal(recipeModal); } else if (action === 'delete-recipe') { if (!confirm('¿Seguro?')) return; 
+                if (recipe.imageUrls && recipe.imageUrls.length > 0) {
+                    const deletePromises = recipe.imageUrls.map(url => {
+                        const imageRef = storage.refFromURL(url);
+                        return imageRef.delete().catch(error => console.error("Error deleting image from storage:", error));
+                    });
+                    Promise.all(deletePromises).then(() => {
+                        console.log("All recipe images deleted from storage.");
+                        const batch = db.batch();
+                        orders.forEach(order => { 
+                            const newItems = (order.items || []).filter(item => item.recipeId !== id); 
+                            if (newItems.length < (order.items || []).length) { 
+                                if (newItems.length === 0) { 
+                                    batch.delete(ordersCollection.doc(order.id)); 
+                                } else { 
+                                    batch.update(ordersCollection.doc(order.id), { items: newItems }); 
+                                } 
+                            } 
+                        }); 
+                        batch.commit().then(() => { recipesCollection.doc(id).delete(); });
+                    }).catch(error => {
+                        console.error("Error deleting images or recipe:", error);
+                        alert("Hubo un error al eliminar las imágenes o la receta.");
+                    });
+                } else {
+                    const batch = db.batch();
+                    orders.forEach(order => { 
+                        const newItems = (order.items || []).filter(item => item.recipeId !== id); 
+                        if (newItems.length < (order.items || []).length) { 
+                            if (newItems.length === 0) { 
+                                batch.delete(ordersCollection.doc(order.id)); 
+                            } else { 
+                                batch.update(ordersCollection.doc(order.id), { items: newItems }); 
+                            } 
+                        } 
+                    }); 
+                    batch.commit().then(() => { recipesCollection.doc(id).delete(); });
+                }
+            } });
+
+            recipeModal.querySelector('form').addEventListener('submit', async e => {
+                e.preventDefault();
+                const id = recipeModal.dataset.editingId;
+                const name = e.target.querySelector('#recipe-name').value;
+                const salePrice = parseFloat(e.target.querySelector('#recipe-sale-price').value);
+                const cookingTime = parseInt(e.target.querySelector('#recipe-cooking-time').value) || 0;
+                const description = e.target.querySelector('#recipe-description').value;
+                const ingredientRows = e.target.querySelectorAll('.ingredient-row');
+                const ingredients = Array.from(ingredientRows).map(row => ({ materialId: row.dataset.materialId, grams: parseFloat(row.querySelector('.ingredient-grams').value) })).filter(ing => ing.materialId && ing.grams > 0);
+                if (ingredients.length === 0) {
+                    alert('Debe agregar al menos un ingrediente.');
+                    return;
+                }
+                const recipeData = { 
+                    name, 
+                    salePrice, 
+                    cookingTime, 
+                    description, 
+                    imageUrls: currentRecipeImages, // Use the managed image URLs
+                    ingredients, 
+                    isAffected: false 
+                };
+                try {
+                    if (id) {
+                        await recipesCollection.doc(id).update(recipeData);
+                    } else {
+                        // For a new recipe, we might need an ID before uploading images.
+                        // A better approach would be to create the doc first, then upload.
+                        // For simplicity now, we save it all at once.
+                        await recipesCollection.add(recipeData);
+                    }
+                    closeModal(recipeModal);
+                } catch (error) {
+                    console.error("Error saving recipe:", error);
+                    alert("Error al guardar la receta.");
+                }
+            });
+            
             const ingredientSearchInput = document.getElementById('ingredient-search'); const ingredientSearchResults = document.getElementById('ingredient-search-results');
             function displayIngredientResults(query = ''){ const lowerCaseQuery = query.toLowerCase(); ingredientSearchResults.innerHTML = ''; materials.filter(m => m.name.toLowerCase().includes(lowerCaseQuery)).forEach(material => { const item = document.createElement('div'); item.className = 'p-2 cursor-pointer hover:bg-stone-100'; item.textContent = material.name; item.onclick = () => { const grams = prompt(`¿Cuántos gramos de ${material.name}?`); if (grams && !isNaN(grams) && parseFloat(grams) > 0) { addIngredientToRecipeForm(material, parseFloat(grams), document.getElementById('ingredients-container')); } ingredientSearchInput.value = ''; ingredientSearchResults.innerHTML = ''; }; ingredientSearchResults.appendChild(item); }); }
             ingredientSearchInput.addEventListener('keyup', e => displayIngredientResults(e.target.value));
@@ -448,6 +646,138 @@
                      }
                  });
             });
+
+            // --- Image Management Logic ---
+            let currentRecipeImages = []; // Stores image URLs for the recipe being edited/created
+            let currentRecipeId = null;   // Stores the ID of the recipe being edited
+
+            const manageImagesBtn = document.getElementById('manage-images-btn');
+            const imageUploadInput = document.getElementById('image-upload-input');
+            const imageCarouselTrack = document.getElementById('image-carousel-track');
+            const carouselPrevBtn = document.getElementById('carousel-prev');
+            const carouselNextBtn = document.getElementById('carousel-next');
+            const noImagesText = document.getElementById('no-images-text');
+            const uploadProgressEl = document.getElementById('upload-progress');
+
+            let currentSlide = 0;
+
+            manageImagesBtn.addEventListener('click', () => {
+                const recipeId = recipeModal.dataset.editingId;
+                currentRecipeId = recipeId;
+                renderImageCarousel();
+                openModal(imageManagementModal);
+            });
+
+            imageUploadInput.addEventListener('change', async (e) => {
+                const files = e.target.files;
+                if (!files || files.length === 0) return;
+
+                uploadProgressEl.classList.remove('hidden');
+                let uploadedCount = 0;
+
+                for (const file of files) {
+                    const storageRef = storage.ref(`recipe_images/${currentRecipeId || 'new_recipe'}/${Date.now()}_${file.name}`);
+                    const uploadTask = storageRef.put(file);
+
+                    uploadTask.on('state_changed', 
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            uploadProgressEl.textContent = `Subiendo ${uploadedCount + 1}/${files.length}: ${progress.toFixed(0)}%`;
+                        }, 
+                        (error) => {
+                            console.error("Upload failed:", error);
+                            alert("Error al subir imagen.");
+                        }, 
+                        async () => {
+                            const downloadURL = await storageRef.getDownloadURL();
+                            currentRecipeImages.push(downloadURL);
+                            uploadedCount++;
+                            uploadProgressEl.textContent = `Subido ${uploadedCount}/${files.length}.`;
+                            if (uploadedCount === files.length) {
+                                // If editing an existing recipe, update it immediately in Firestore
+                                if (currentRecipeId) {
+                                    await recipesCollection.doc(currentRecipeId).update({ imageUrls: currentRecipeImages });
+                                }
+                                renderImageCarousel(); // Re-render carousel with new images
+                                imageUploadInput.value = ''; // Clear input
+                                uploadProgressEl.classList.add('hidden');
+                            }
+                        }
+                    );
+                }
+            });
+
+            function renderImageCarousel() {
+                imageCarouselTrack.innerHTML = '';
+                if (currentRecipeImages.length === 0) {
+                    noImagesText.classList.remove('hidden');
+                    carouselPrevBtn.classList.add('hidden');
+                    carouselNextBtn.classList.add('hidden');
+                    return;
+                }
+
+                noImagesText.classList.add('hidden');
+                carouselPrevBtn.classList.remove('hidden');
+                carouselNextBtn.classList.remove('hidden');
+
+                currentRecipeImages.forEach((url, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'image-carousel-slide';
+                    slide.innerHTML = `<img src="${url}" alt="Imagen de receta ${index + 1}"><button type="button" class="delete-image-btn" data-url="${url}">X</button>`;
+                    imageCarouselTrack.appendChild(slide);
+                });
+                
+                // Adjust track width and initial position
+                imageCarouselTrack.style.width = `${currentRecipeImages.length * 100}%`;
+                currentSlide = 0; // Reset to first slide
+                updateCarouselPosition();
+            }
+
+            function updateCarouselPosition() {
+                if (currentRecipeImages.length === 0) return;
+                const offset = -currentSlide * (100 / currentRecipeImages.length);
+                imageCarouselTrack.style.transform = `translateX(${offset}%)`;
+            }
+
+            carouselPrevBtn.addEventListener('click', () => {
+                if (currentRecipeImages.length === 0) return;
+                currentSlide = (currentSlide - 1 + currentRecipeImages.length) % currentRecipeImages.length;
+                updateCarouselPosition();
+            });
+
+            carouselNextBtn.addEventListener('click', () => {
+                if (currentRecipeImages.length === 0) return;
+                currentSlide = (currentSlide + 1) % currentRecipeImages.length;
+                updateCarouselPosition();
+            });
+
+            imageCarouselTrack.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('delete-image-btn')) {
+                    if (!confirm('¿Seguro que quieres eliminar esta imagen?')) return;
+                    const imageUrlToDelete = e.target.dataset.url;
+                    
+                    try {
+                        // Delete from Firebase Storage
+                        const imageRef = storage.refFromURL(imageUrlToDelete);
+                        await imageRef.delete();
+                        console.log("Image deleted from storage:", imageUrlToDelete);
+
+                        // Remove from currentRecipeImages array
+                        currentRecipeImages = currentRecipeImages.filter(url => url !== imageUrlToDelete);
+
+                        // Update Firestore document if it's an existing recipe
+                        if (currentRecipeId) {
+                            await recipesCollection.doc(currentRecipeId).update({ imageUrls: currentRecipeImages });
+                        }
+                        
+                        renderImageCarousel(); // Re-render the carousel
+                    } catch (error) {
+                        console.error("Error deleting image:", error);
+                        alert("Hubo un error al eliminar la imagen.");
+                    }
+                }
+            });
+            // End Image Management Logic
         }
     });
     </script>
