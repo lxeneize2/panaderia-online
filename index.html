@@ -8,7 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Scripts de Firebase --><script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <!-- Scripts de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-storage-compat.js"></script>
@@ -131,7 +132,8 @@
         <svg class="animate-spin h-8 w-8 text-stone-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
     </div>
 
-    <!-- PANTALLA DE LOGIN --><div id="login-container" class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <!-- PANTALLA DE LOGIN -->
+    <div id="login-container" class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full space-y-8 card !overflow-visible">
             <div><h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Acceso de Administrador</h2></div>
             <form id="login-form" class="mt-8 space-y-6">
@@ -145,7 +147,8 @@
         </div>
     </div>
 
-    <!-- PANEL DE ADMINISTRACIÓN (Oculto por defecto) --><div id="admin-panel" class="hidden">
+    <!-- PANEL DE ADMINISTRACIÓN (Oculto por defecto) -->
+    <div id="admin-panel" class="hidden">
         <div class="container mx-auto p-4 md:p-8">
             <nav class="card !overflow-visible flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div class="flex flex-wrap items-center justify-center gap-2">
@@ -166,7 +169,8 @@
                         <div class="lg:col-span-3 space-y-6"><div class="card !overflow-visible"><div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"><h2 class="text-2xl font-bold text-stone-700">Pedidos Activos</h2><button id="add-order-btn" class="btn btn-primary w-full sm:w-auto">Crear Nuevo Pedido</button></div><div id="orders-container" class="space-y-4"><p class="text-center text-stone-500">Aún no hay pedidos activos.</p></div></div></div>
                         <div class="lg:col-span-2 space-y-6">
                             <div id="agenda-container" class="card !overflow-visible">
-                                <!-- La agenda semanal se generará aquí --></div>
+                                <!-- La agenda semanal se generará aquí -->
+                            </div>
                             <div class="card !overflow-visible wood-texture text-white"><h3 class="text-xl font-bold mb-2">Costo Total de Producción</h3><p id="total-production-cost" class="text-4xl font-bold">$0.00</p></div>
                             <div class="card !overflow-visible bg-green-600 text-white"><h3 class="text-xl font-bold mb-2">Total a Recaudar</h3><p id="total-revenue" class="text-4xl font-bold">$0.00</p></div>
                             <div class="card !overflow-visible fire-texture text-white"><h3 class="text-xl font-bold mb-2">Tiempo Total de Cocción</h3><p id="total-cooking-time" class="text-4xl font-bold">0 min</p></div>
@@ -190,9 +194,10 @@
         </div>
     </div>
     
-    <!-- Modals --><div id="material-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 id="material-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3><form id="material-form"><div class="space-y-4"><div><label for="material-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="material-name" required></div><div><label for="material-weight" class="block text-sm font-medium text-stone-600 mb-1">Peso (gr)</label><input type="number" id="material-weight" required></div><div><label for="material-price" class="block text-sm font-medium text-stone-600 mb-1">Precio ($)</label><input type="number" step="0.01" id="material-price" required></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
+    <!-- Modals -->
+    <div id="material-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 id="material-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3><form id="material-form"><div class="space-y-4"><div><label for="material-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="material-name" required></div><div><label for="material-weight" class="block text-sm font-medium text-stone-600 mb-1">Peso (gr)</label><input type="number" id="material-weight" required></div><div><label for="material-price" class="block text-sm font-medium text-stone-600 mb-1">Precio ($)</label><input type="number" step="0.01" id="material-price" required></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
     
-    <!-- Recipe Modal (Updated for Image Management) --><div id="recipe-modal" class="modal-container hidden">
+    <div id="recipe-modal" class="modal-container hidden">
         <div class="modal-backdrop"></div>
         <div class="modal-content">
             <h3 id="recipe-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3>
@@ -205,7 +210,7 @@
                     <div><label for="recipe-cooking-time" class="block text-sm font-medium text-stone-600 mb-1">Tiempo Cocción (min)</label><input type="number" id="recipe-cooking-time"></div>
                     <div><label for="recipe-description" class="block text-sm font-medium text-stone-600 mb-1">Descripción</label><textarea id="recipe-description" rows="3"></textarea></div>
                     
-                    <!-- Botón para gestionar imágenes --><div class="flex justify-end">
+                    <div class="flex justify-end">
                         <button type="button" id="manage-images-btn" class="btn btn-secondary">Gestionar Imágenes</button>
                     </div>
 
@@ -227,13 +232,14 @@
         </div>
     </div>
 
-    <!-- Image Management Modal --><div id="image-management-modal" class="modal-container hidden">
+    <div id="image-management-modal" class="modal-container hidden">
         <div class="modal-backdrop"></div>
         <div class="modal-content max-w-xl">
             <h3 class="text-xl font-bold text-stone-700 mb-4">Gestionar Imágenes de Receta</h3>
             <div id="current-images-display" class="image-carousel-container">
                 <div id="image-carousel-track" class="image-carousel-track">
-                    <!-- Imágenes cargadas dinámicamente aquí --></div>
+                    <!-- Imágenes cargadas dinámicamente aquí -->
+                </div>
                 <button type="button" class="carousel-arrow left" id="carousel-prev">&#10094;</button>
                 <button type="button" class="carousel-arrow right" id="carousel-next">&#10095;</button>
                 <p id="no-images-text" class="text-stone-500 hidden">No hay imágenes</p>
@@ -268,7 +274,7 @@
         
         const db = firebase.firestore();
         const auth = firebase.auth();
-        const storage = firebase.storage(); // Initialize Firebase Storage
+        const storage = firebase.storage();
 
         const loginContainer = document.getElementById('login-container');
         const adminPanel = document.getElementById('admin-panel');
@@ -309,7 +315,7 @@
             const ordersContainer = document.getElementById('orders-container');
             const materialModal = document.getElementById('material-modal');
             const recipeModal = document.getElementById('recipe-modal');
-            const imageManagementModal = document.getElementById('image-management-modal'); // New modal
+            const imageManagementModal = document.getElementById('image-management-modal');
             const orderDetailsModal = document.getElementById('order-details-modal');
             const editOrderModal = document.getElementById('edit-order-modal');
             const historyContent = document.getElementById('history-content');
@@ -353,7 +359,7 @@
                     const pricePerGram = (material.price && material.weight) ? material.price / material.weight : 0;
                     const row = document.createElement('tr');
                     row.className = 'bg-white border-b';
-                    row.innerHTML = `<td class="px-6 py-4 font-medium text-stone-900 whitespace-nowrap material-name-cell">${material.name}</td><td class="px-6 py-4">${formatCurrency(pricePerGram)}</td><td class="px-6 py-4 text-right"><div class="flex flex-col sm:flex-row gap-2 justify-end actions-cell">${''}<button class="btn text-xs btn-secondary" data-action="edit-material" data-id="${material.id}">Editar</button><button class="btn text-xs btn-danger" data-action="delete-material" data-id="${material.id}">Eliminar</button></div></td>`;
+                    row.innerHTML = `<td class="px-6 py-4 font-medium text-stone-900 whitespace-nowrap material-name-cell">${material.name}</td><td class="px-6 py-4">${formatCurrency(pricePerGram)}</td><td class="px-6 py-4 text-right"><div class="flex flex-col sm:flex-row gap-2 justify-end actions-cell"><button class="btn text-xs btn-secondary" data-action="edit-material" data-id="${material.id}">Editar</button><button class="btn text-xs btn-danger" data-action="delete-material" data-id="${material.id}">Eliminar</button></div></td>`;
                     materialsTable.appendChild(row);
                 });
             };
@@ -468,15 +474,73 @@
             document.getElementById('add-material-btn').addEventListener('click', () => { const form = materialModal.querySelector('form'); form.reset(); materialModal.dataset.editingId = ''; materialModal.querySelector('h3').textContent = 'Nuevo Material'; openModal(materialModal); });
             materialsTable.addEventListener('click', e => { const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; if (action === 'edit-material') { const material = materials.find(m => m.id === id); if (!material) return; const form = materialModal.querySelector('form'); form.querySelector('#material-name').value = material.name; form.querySelector('#material-weight').value = material.weight; form.querySelector('#material-price').value = material.price; materialModal.dataset.editingId = id; materialModal.querySelector('h3').textContent = 'Editar Material'; openModal(materialModal); } else if (action === 'delete-material') { if (!confirm('¿Seguro?')) return; const batch = db.batch(); recipes.forEach(recipe => { if ((recipe.ingredients || []).some(ing => ing.materialId === id)) { batch.update(recipesCollection.doc(recipe.id), { isAffected: true }); } }); batch.commit().then(() => { materialsCollection.doc(id).delete(); }); } });
             materialModal.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); const id = materialModal.dataset.editingId; const name = e.target.querySelector('#material-name').value; const weight = parseFloat(e.target.querySelector('#material-weight').value); const price = parseFloat(e.target.querySelector('#material-price').value); const materialData = { name, weight, price }; try { if (id) { await materialsCollection.doc(id).set(materialData, { merge: true }); } else { await materialsCollection.add(materialData); } closeModal(materialModal); } catch (error) { console.error(error); } });
-            document.getElementById('add-recipe-btn').addEventListener('click', () => { const form = recipeModal.querySelector('form'); form.reset(); recipeModal.dataset.editingId = ''; recipeModal.querySelector('h3').textContent = 'Nueva Receta'; form.querySelector('#ingredients-container').innerHTML = ''; currentRecipeImages = []; openModal(recipeModal); });
-            recipesList.addEventListener('click', e => { const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; const recipe = recipes.find(r => r.id === id); if (!recipe) return; if (action === 'edit-recipe') { const form = recipeModal.querySelector('form'); form.reset(); form.querySelector('#recipe-name').value = recipe.name; form.querySelector('#recipe-sale-price').value = recipe.salePrice; form.querySelector('#recipe-cooking-time').value = recipe.cookingTime || ''; form.querySelector('#recipe-description').value = recipe.description || ''; currentRecipeImages = recipe.imageUrls || []; recipeModal.dataset.editingId = id; recipeModal.querySelector('h3').textContent = 'Editar Receta'; const container = form.querySelector('#ingredients-container'); container.innerHTML = ''; (recipe.ingredients || []).forEach(ing => { const material = materials.find(m => m.id === ing.materialId); if (material) addIngredientToRecipeForm(material, ing.grams, container); }); openModal(recipeModal); } else if (action === 'delete-recipe') { if (!confirm('¿Seguro?')) return; 
-                if (recipe.imageUrls && recipe.imageUrls.length > 0) {
-                    const deletePromises = recipe.imageUrls.map(url => {
-                        const imageRef = storage.refFromURL(url);
-                        return imageRef.delete().catch(error => console.error("Error deleting image from storage:", error));
-                    });
-                    Promise.all(deletePromises).then(() => {
-                        console.log("All recipe images deleted from storage.");
+            
+            document.getElementById('add-recipe-btn').addEventListener('click', () => {
+                const form = recipeModal.querySelector('form');
+                form.reset();
+                
+                const newRecipeRef = recipesCollection.doc();
+                recipeModal.dataset.editingId = newRecipeRef.id;
+                recipeModal.dataset.isNew = 'true';
+                
+                recipeModal.querySelector('h3').textContent = 'Nueva Receta';
+                form.querySelector('#ingredients-container').innerHTML = '';
+                currentRecipeImages = [];
+                openModal(recipeModal);
+            });
+
+            recipesList.addEventListener('click', e => { 
+                const button = e.target.closest('button'); 
+                if (!button) return; 
+                const action = button.dataset.action; 
+                const id = button.dataset.id; 
+                const recipe = recipes.find(r => r.id === id); 
+                if (!recipe) return; 
+
+                if (action === 'edit-recipe') { 
+                    const form = recipeModal.querySelector('form'); 
+                    form.reset(); 
+                    form.querySelector('#recipe-name').value = recipe.name; 
+                    form.querySelector('#recipe-sale-price').value = recipe.salePrice; 
+                    form.querySelector('#recipe-cooking-time').value = recipe.cookingTime || ''; 
+                    form.querySelector('#recipe-description').value = recipe.description || ''; 
+                    currentRecipeImages = recipe.imageUrls || []; 
+                    recipeModal.dataset.editingId = id; 
+                    recipeModal.dataset.isNew = 'false';
+                    recipeModal.querySelector('h3').textContent = 'Editar Receta'; 
+                    const container = form.querySelector('#ingredients-container'); 
+                    container.innerHTML = ''; 
+                    (recipe.ingredients || []).forEach(ing => { 
+                        const material = materials.find(m => m.id === ing.materialId); 
+                        if (material) addIngredientToRecipeForm(material, ing.grams, container); 
+                    }); 
+                    openModal(recipeModal); 
+                } else if (action === 'delete-recipe') { 
+                    if (!confirm('¿Seguro?')) return; 
+                    if (recipe.imageUrls && recipe.imageUrls.length > 0) {
+                        const deletePromises = recipe.imageUrls.map(url => {
+                            const imageRef = storage.refFromURL(url);
+                            return imageRef.delete().catch(error => console.error("Error deleting image from storage:", error));
+                        });
+                        Promise.all(deletePromises).then(() => {
+                            console.log("All recipe images deleted from storage.");
+                            const batch = db.batch();
+                            orders.forEach(order => { 
+                                const newItems = (order.items || []).filter(item => item.recipeId !== id); 
+                                if (newItems.length < (order.items || []).length) { 
+                                    if (newItems.length === 0) { 
+                                        batch.delete(ordersCollection.doc(order.id)); 
+                                    } else { 
+                                        batch.update(ordersCollection.doc(order.id), { items: newItems }); 
+                                    } 
+                                } 
+                            }); 
+                            batch.commit().then(() => { recipesCollection.doc(id).delete(); });
+                        }).catch(error => {
+                            console.error("Error deleting images or recipe:", error);
+                            alert("Hubo un error al eliminar las imágenes o la receta.");
+                        });
+                    } else {
                         const batch = db.batch();
                         orders.forEach(order => { 
                             const newItems = (order.items || []).filter(item => item.recipeId !== id); 
@@ -489,56 +553,41 @@
                             } 
                         }); 
                         batch.commit().then(() => { recipesCollection.doc(id).delete(); });
-                    }).catch(error => {
-                        console.error("Error deleting images or recipe:", error);
-                        alert("Hubo un error al eliminar las imágenes o la receta.");
-                    });
-                } else {
-                    const batch = db.batch();
-                    orders.forEach(order => { 
-                        const newItems = (order.items || []).filter(item => item.recipeId !== id); 
-                        if (newItems.length < (order.items || []).length) { 
-                            if (newItems.length === 0) { 
-                                batch.delete(ordersCollection.doc(order.id)); 
-                            } else { 
-                                batch.update(ordersCollection.doc(order.id), { items: newItems }); 
-                            } 
-                        } 
-                    }); 
-                    batch.commit().then(() => { recipesCollection.doc(id).delete(); });
-                }
-            } });
+                    }
+                } 
+            });
 
             recipeModal.querySelector('form').addEventListener('submit', async e => {
                 e.preventDefault();
                 const id = recipeModal.dataset.editingId;
+                const isNew = recipeModal.dataset.isNew === 'true';
                 const name = e.target.querySelector('#recipe-name').value;
                 const salePrice = parseFloat(e.target.querySelector('#recipe-sale-price').value);
                 const cookingTime = parseInt(e.target.querySelector('#recipe-cooking-time').value) || 0;
                 const description = e.target.querySelector('#recipe-description').value;
                 const ingredientRows = e.target.querySelectorAll('.ingredient-row');
                 const ingredients = Array.from(ingredientRows).map(row => ({ materialId: row.dataset.materialId, grams: parseFloat(row.querySelector('.ingredient-grams').value) })).filter(ing => ing.materialId && ing.grams > 0);
+                
                 if (ingredients.length === 0) {
                     alert('Debe agregar al menos un ingrediente.');
                     return;
                 }
+
                 const recipeData = { 
                     name, 
                     salePrice, 
                     cookingTime, 
                     description, 
-                    imageUrls: currentRecipeImages, // Use the managed image URLs
+                    imageUrls: currentRecipeImages,
                     ingredients, 
                     isAffected: false 
                 };
+
                 try {
-                    if (id) {
-                        await recipesCollection.doc(id).update(recipeData);
+                    if (isNew) {
+                        await recipesCollection.doc(id).set(recipeData);
                     } else {
-                        // For a new recipe, we might need an ID before uploading images.
-                        // A better approach would be to create the doc first, then upload.
-                        // For simplicity now, we save it all at once.
-                        await recipesCollection.add(recipeData);
+                        await recipesCollection.doc(id).update(recipeData);
                     }
                     closeModal(recipeModal);
                 } catch (error) {
@@ -547,7 +596,8 @@
                 }
             });
             
-            const ingredientSearchInput = document.getElementById('ingredient-search'); const ingredientSearchResults = document.getElementById('ingredient-search-results');
+            const ingredientSearchInput = document.getElementById('ingredient-search'); 
+            const ingredientSearchResults = document.getElementById('ingredient-search-results');
             function displayIngredientResults(query = ''){ const lowerCaseQuery = query.toLowerCase(); ingredientSearchResults.innerHTML = ''; materials.filter(m => m.name.toLowerCase().includes(lowerCaseQuery)).forEach(material => { const item = document.createElement('div'); item.className = 'p-2 cursor-pointer hover:bg-stone-100'; item.textContent = material.name; item.onclick = () => { const grams = prompt(`¿Cuántos gramos de ${material.name}?`); if (grams && !isNaN(grams) && parseFloat(grams) > 0) { addIngredientToRecipeForm(material, parseFloat(grams), document.getElementById('ingredients-container')); } ingredientSearchInput.value = ''; ingredientSearchResults.innerHTML = ''; }; ingredientSearchResults.appendChild(item); }); }
             ingredientSearchInput.addEventListener('keyup', e => displayIngredientResults(e.target.value));
             ingredientSearchInput.addEventListener('focus', () => displayIngredientResults(ingredientSearchInput.value));
@@ -648,8 +698,8 @@
             });
 
             // --- Image Management Logic ---
-            let currentRecipeImages = []; // Stores image URLs for the recipe being edited/created
-            let currentRecipeId = null;   // Stores the ID of the recipe being edited
+            let currentRecipeImages = [];
+            let currentRecipeId = null;
 
             const manageImagesBtn = document.getElementById('manage-images-btn');
             const imageUploadInput = document.getElementById('image-upload-input');
@@ -662,8 +712,7 @@
             let currentSlide = 0;
 
             manageImagesBtn.addEventListener('click', () => {
-                const recipeId = recipeModal.dataset.editingId;
-                currentRecipeId = recipeId;
+                currentRecipeId = recipeModal.dataset.editingId;
                 renderImageCarousel();
                 openModal(imageManagementModal);
             });
@@ -672,11 +721,16 @@
                 const files = e.target.files;
                 if (!files || files.length === 0) return;
 
+                if (!currentRecipeId) {
+                    alert("No se pudo obtener la ID de la receta. Cierre esta ventana y guarde la receta primero.");
+                    return;
+                }
+
                 uploadProgressEl.classList.remove('hidden');
                 let uploadedCount = 0;
 
                 for (const file of files) {
-                    const storageRef = storage.ref(`recipe_images/${currentRecipeId || 'new_recipe'}/${Date.now()}_${file.name}`);
+                    const storageRef = storage.ref(`recipe_images/${currentRecipeId}/${Date.now()}_${file.name}`);
                     const uploadTask = storageRef.put(file);
 
                     uploadTask.on('state_changed', 
@@ -687,6 +741,7 @@
                         (error) => {
                             console.error("Upload failed:", error);
                             alert("Error al subir imagen.");
+                            uploadProgressEl.classList.add('hidden');
                         }, 
                         async () => {
                             const downloadURL = await storageRef.getDownloadURL();
@@ -694,13 +749,10 @@
                             uploadedCount++;
                             uploadProgressEl.textContent = `Subido ${uploadedCount}/${files.length}.`;
                             if (uploadedCount === files.length) {
-                                // If editing an existing recipe, update it immediately in Firestore
-                                if (currentRecipeId) {
-                                    await recipesCollection.doc(currentRecipeId).update({ imageUrls: currentRecipeImages });
-                                }
-                                renderImageCarousel(); // Re-render carousel with new images
-                                imageUploadInput.value = ''; // Clear input
-                                uploadProgressEl.classList.add('hidden');
+                                await recipesCollection.doc(currentRecipeId).update({ imageUrls: currentRecipeImages });
+                                renderImageCarousel();
+                                imageUploadInput.value = '';
+                                setTimeout(() => uploadProgressEl.classList.add('hidden'), 2000);
                             }
                         }
                     );
@@ -717,8 +769,9 @@
                 }
 
                 noImagesText.classList.add('hidden');
-                carouselPrevBtn.classList.remove('hidden');
-                carouselNextBtn.classList.remove('hidden');
+                carouselPrevBtn.classList.toggle('hidden', currentRecipeImages.length <= 1);
+                carouselNextBtn.classList.toggle('hidden', currentRecipeImages.length <= 1);
+
 
                 currentRecipeImages.forEach((url, index) => {
                     const slide = document.createElement('div');
@@ -727,9 +780,8 @@
                     imageCarouselTrack.appendChild(slide);
                 });
                 
-                // Adjust track width and initial position
                 imageCarouselTrack.style.width = `${currentRecipeImages.length * 100}%`;
-                currentSlide = 0; // Reset to first slide
+                currentSlide = 0;
                 updateCarouselPosition();
             }
 
@@ -757,20 +809,17 @@
                     const imageUrlToDelete = e.target.dataset.url;
                     
                     try {
-                        // Delete from Firebase Storage
                         const imageRef = storage.refFromURL(imageUrlToDelete);
                         await imageRef.delete();
                         console.log("Image deleted from storage:", imageUrlToDelete);
 
-                        // Remove from currentRecipeImages array
                         currentRecipeImages = currentRecipeImages.filter(url => url !== imageUrlToDelete);
 
-                        // Update Firestore document if it's an existing recipe
                         if (currentRecipeId) {
                             await recipesCollection.doc(currentRecipeId).update({ imageUrls: currentRecipeImages });
                         }
                         
-                        renderImageCarousel(); // Re-render the carousel
+                        renderImageCarousel();
                     } catch (error) {
                         console.error("Error deleting image:", error);
                         alert("Hubo un error al eliminar la imagen.");
