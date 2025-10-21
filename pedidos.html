@@ -47,7 +47,7 @@
         .product-card-carousel {
             position: relative;
             width: 100%;
-            height: 150px;
+            aspect-ratio: 3 / 4;
             overflow: hidden;
             border-top-left-radius: 0.75rem;
             border-top-right-radius: 0.75rem;
@@ -68,8 +68,8 @@
             background-color: #f0f0f0;
         }
         .product-card-carousel-slide img {
-            max-width: 100%;
-            max-height: 100%;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
         }
         .carousel-nav-btn {
@@ -96,7 +96,7 @@
         .publication-carousel-container {
             position: relative;
             width: 100%;
-            height: 300px;
+            height: 400px;
             overflow: hidden;
             border-radius: 0.75rem;
             background-color: #f0f0f0;
@@ -213,10 +213,10 @@
     </div>
 
     <div id="publication-modal" class="modal-container hidden">
-        <div class="modal-content max-w-2xl !p-0">
+        <div class="modal-content max-w-3xl !p-0">
             <button class="close-modal-btn" id="close-publication-modal">&times;</button>
             <div class="grid grid-cols-1 md:grid-cols-2 h-full">
-                <div class="publication-carousel-container flex-shrink-0 md:h-auto h-64">
+                <div class="publication-carousel-container flex-shrink-0 md:h-auto h-80">
                     <div id="publication-carousel-track" class="publication-carousel-track"></div>
                     <button type="button" class="publication-modal-arrow left" id="publication-carousel-prev">&#10094;</button>
                     <button type="button" class="publication-modal-arrow right" id="publication-carousel-next">&#10095;</button>
@@ -224,7 +224,7 @@
                 <div class="p-4 md:p-6 flex flex-col justify-between">
                     <div>
                         <h3 id="publication-recipe-name" class="text-2xl font-bold text-stone-700 mb-2"></h3>
-                        <p id="publication-recipe-description" class="text-stone-600 text-sm mb-4"></p>
+                        <p id="publication-recipe-description" class="text-stone-600 text-sm mb-4 whitespace-pre-wrap"></p>
                         <p id="publication-recipe-price" class="text-xl font-bold text-stone-800 mb-4"></p>
                     </div>
                     <div class="flex items-center justify-between gap-4 mt-auto pt-4 border-t border-stone-200">
@@ -293,11 +293,11 @@
                         productCard.dataset.recipeId = recipe.id;
 
                         const imageUrls = recipe.imageUrls || [];
-                        const firstImage = imageUrls[0] || 'https://via.placeholder.com/300x200?text=Sin+Imagen';
+                        const firstImage = imageUrls[0] || 'https://via.placeholder.com/300x400?text=Sin+Imagen';
 
                         let carouselHtml = `
                             <div class="product-card-carousel" data-recipe-id="${recipe.id}">
-                                <div class="product-card-carousel-track" style="width: ${imageUrls.length * 100}%">
+                                <div class="product-card-carousel-track">
                                     ${(imageUrls.length > 0 ? imageUrls : [firstImage]).map(url => `<div class="product-card-carousel-slide"><img src="${url}" alt="${recipe.name}"></div>`).join('')}
                                 </div>
                                 ${imageUrls.length > 1 ? `
@@ -335,7 +335,7 @@
                 if (slides.length <= 1) return;
 
                 function updateCarousel() {
-                    track.style.transform = `translateX(-${currentSlide * (100 / slides.length)}%)`;
+                    track.style.transform = `translateX(-${currentSlide * 100}%)`;
                 }
 
                 prevBtn.addEventListener('click', (e) => {
@@ -528,7 +528,7 @@
 
             function renderPublicationCarousel(imageUrls) {
                 publicationCarouselTrack.innerHTML = '';
-                const imagesToDisplay = imageUrls.length > 0 ? imageUrls : ['https://via.placeholder.com/300x200?text=Sin+Imagen'];
+                const imagesToDisplay = imageUrls.length > 0 ? imageUrls : ['https://via.placeholder.com/400x300?text=Sin+Imagen'];
 
                 imagesToDisplay.forEach((url, index) => {
                     const slide = document.createElement('div');
@@ -537,32 +537,32 @@
                     publicationCarouselTrack.appendChild(slide);
                 });
                 
-                publicationCarouselTrack.style.width = `${imagesToDisplay.length * 100}%`;
                 publicationCarouselPrevBtn.style.display = imagesToDisplay.length > 1 ? 'flex' : 'none';
                 publicationCarouselNextBtn.style.display = imagesToDisplay.length > 1 ? 'flex' : 'none';
                 
                 currentPublicationSlide = 0;
-                updatePublicationCarouselPosition(imagesToDisplay.length);
+                updatePublicationCarouselPosition();
             }
 
-            function updatePublicationCarouselPosition(totalSlides) {
+            function updatePublicationCarouselPosition() {
+                const totalSlides = publicationCarouselTrack.children.length;
                 if (totalSlides === 0) return;
-                const offset = -currentPublicationSlide * (100 / totalSlides);
+                const offset = -currentPublicationSlide * 100;
                 publicationCarouselTrack.style.transform = `translateX(${offset}%)`;
             }
             
             publicationCarouselPrevBtn.addEventListener('click', () => {
-                const totalSlides = currentPublicationRecipe.imageUrls?.length || 0;
+                const totalSlides = publicationCarouselTrack.children.length;
                 if (totalSlides <= 1) return;
                 currentPublicationSlide = (currentPublicationSlide - 1 + totalSlides) % totalSlides;
-                updatePublicationCarouselPosition(totalSlides);
+                updatePublicationCarouselPosition();
             });
 
             publicationCarouselNextBtn.addEventListener('click', () => {
-                const totalSlides = currentPublicationRecipe.imageUrls?.length || 0;
+                const totalSlides = publicationCarouselTrack.children.length;
                 if (totalSlides <= 1) return;
                 currentPublicationSlide = (currentPublicationSlide + 1) % totalSlides;
-                updatePublicationCarouselPosition(totalSlides);
+                updatePublicationCarouselPosition();
             });
 
             publicationAddToCartBtn.addEventListener('click', () => {
