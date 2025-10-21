@@ -55,6 +55,21 @@
         .actions-cell .btn {
             width: 100%;
         }
+        .hour-btn {
+            border: 1px solid #D1C4E9;
+            background-color: #FAFAFA;
+            color: #6D4C41;
+            transition: all 0.2s ease-in-out;
+            padding: 0.5rem;
+        }
+        .hour-btn:hover {
+            background-color: #EFEBE9;
+        }
+        .hour-btn.hour-selected {
+            background-color: #6D4C41;
+            color: white;
+            border-color: #6D4C41;
+        }
     </style>
 </head>
 <body>
@@ -157,9 +172,9 @@
         </div>
     </div>
 
-    <div id="new-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Crear Pedido</h3><form id="new-order-form"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="customer-name" required></div><div><label for="customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="customer-phone"></div></div><div><label for="delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="delivery-date"></div><div><label for="delivery-time-slot" class="block text-sm font-medium text-stone-600 mb-1">Franja Horaria de Entrega</label><select id="delivery-time-slot"><option value="Cualquier horario">Cualquier horario</option><option value="Mañana (9-13hs)">Mañana (9-13hs)</option><option value="Tarde (14-18hs)">Tarde (14-18hs)</option><option value="Tarde (18-21hs)">Tarde (18-21hs)</option></select></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label><div class="flex items-center gap-x-4"><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin asignar" class="mr-1" checked>Sin asignar</label><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin cortar" class="mr-1">Sin cortar</label><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Cortado" class="mr-1">Cortado</label></div></div><div class="relative"><label for="order-recipe-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Producto</label><input type="text" id="order-recipe-search"><div id="order-recipe-search-results" class="absolute bg-white border z-20 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div></div><div><h4 class="text-md font-medium text-stone-600 mb-2">Productos</h4><div id="order-selected-recipes" class="space-y-2 border p-3 rounded-md min-h-[60px] max-h-48 overflow-y-auto"></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Crear</button></div></form></div></div>
+    <div id="new-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Crear Pedido</h3><form id="new-order-form"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="customer-name" required></div><div><label for="customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="customer-phone"></div></div><div><label for="delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="delivery-date"></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Horarios de Entrega</label><div id="new-order-hours-grid" class="grid grid-cols-6 gap-2"></div></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label><div class="flex items-center gap-x-4"><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin asignar" class="mr-1" checked>Sin asignar</label><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin cortar" class="mr-1">Sin cortar</label><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Cortado" class="mr-1">Cortado</label></div></div><div class="relative"><label for="order-recipe-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Producto</label><input type="text" id="order-recipe-search"><div id="order-recipe-search-results" class="absolute bg-white border z-20 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div></div><div><h4 class="text-md font-medium text-stone-600 mb-2">Productos</h4><div id="order-selected-recipes" class="space-y-2 border p-3 rounded-md min-h-[60px] max-h-48 overflow-y-auto"></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Crear</button></div></form></div></div>
     <div id="order-details-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Materiales del Pedido</h3><div id="order-details-content"></div><div class="flex justify-end mt-6"><button type="button" class="btn-cancel-modal btn btn-primary">Cerrar</button></div></div></div>
-    <div id="edit-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Editar Pedido</h3><form id="edit-order-form"><input type="hidden" id="edit-order-id"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="edit-customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="edit-customer-name" required></div><div><label for="edit-customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="edit-customer-phone"></div></div><div><label for="edit-delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="edit-delivery-date"></div><div><label for="edit-delivery-time-slot" class="block text-sm font-medium text-stone-600 mb-1">Franja Horaria de Entrega</label><select id="edit-delivery-time-slot"><option value="Cualquier horario">Cualquier horario</option><option value="Mañana (9-13hs)">Mañana (9-13hs)</option><option value="Tarde (14-18hs)">Tarde (14-18hs)</option><option value="Tarde (18-21hs)">Tarde (18-21hs)</option></select></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label><div class="flex items-center gap-x-4"><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Sin asignar" class="mr-1">Sin asignar</label><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Sin cortar" class="mr-1">Sin cortar</label><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Cortado" class="mr-1">Cortado</label></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
+    <div id="edit-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Editar Pedido</h3><form id="edit-order-form"><input type="hidden" id="edit-order-id"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="edit-customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="edit-customer-name" required></div><div><label for="edit-customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="edit-customer-phone"></div></div><div><label for="edit-delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="edit-delivery-date"></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Horarios de Entrega</label><div id="edit-order-hours-grid" class="grid grid-cols-6 gap-2"></div></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label><div class="flex items-center gap-x-4"><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Sin asignar" class="mr-1">Sin asignar</label><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Sin cortar" class="mr-1">Sin cortar</label><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Cortado" class="mr-1">Cortado</label></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
     
     <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -270,7 +285,21 @@
                     const itemsHtml = (order.items || []).map(item => { const recipe = recipes.find(r => r.id === item.recipeId); const salePrice = (recipe ? recipe.salePrice : 0) * item.quantity; totalSalePrice += salePrice; totalCookingTime += (recipe ? recipe.cookingTime || 0 : 0) * item.quantity; return `<li class="flex justify-between items-center py-1"><span class="text-stone-700">${item.quantity} x ${recipe ? recipe.name : 'Receta eliminada'}</span><span class="text-sm text-stone-800 font-medium">${formatCurrency(salePrice)}</span></li>`; }).join('');
                     const deliveryDateHtml = order.deliveryDate ? `<p class="text-sm text-yellow-800 bg-yellow-100 px-2 py-1 rounded-full">${formatDeliveryDate(order.deliveryDate)}</p>` : '';
                     const slicingHtml = (order.slicingOption && order.slicingOption !== 'Sin asignar') ? `<p class="text-sm text-purple-800 bg-purple-100 px-2 py-1 rounded-full">${order.slicingOption}</p>` : '';
-                    const timeSlotHtml = (order.deliveryTimeSlot && order.deliveryTimeSlot !== 'Cualquier horario') ? `<p class="text-sm text-cyan-800 bg-cyan-100 px-2 py-1 rounded-full">${order.deliveryTimeSlot}</p>` : '';
+                    
+                    let timeSlotHtml = '';
+                    if (order.deliveryHours && order.deliveryHours.length > 0) {
+                        const sortedHours = order.deliveryHours.sort((a, b) => a - b);
+                        const minHour = sortedHours[0];
+                        const maxHour = sortedHours[sortedHours.length - 1];
+                        let timeText = '';
+                        if (minHour === maxHour) {
+                            timeText = `a las ${minHour}hs`;
+                        } else {
+                            timeText = `de ${minHour}hs a ${maxHour}hs`;
+                        }
+                        timeSlotHtml = `<p class="text-sm text-cyan-800 bg-cyan-100 px-2 py-1 rounded-full">${timeText}</p>`;
+                    }
+
                     const phoneHtml = order.customerPhone ? `<p class="text-sm text-stone-500">Tel: ${order.customerPhone}</p>` : '';
                     orderCard.innerHTML = `<div class="p-4 bg-stone-50 rounded-t-lg border-b"><div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"><div><h4 class="font-bold text-stone-800">${order.customerName}</h4>${phoneHtml}</div><div class="flex items-center gap-2 flex-wrap justify-end">${slicingHtml}${timeSlotHtml}${deliveryDateHtml}<button class="btn text-xs bg-green-100 text-green-800 hover:bg-green-200" data-action="complete-order" data-id="${order.id}">Completar</button><button class="btn text-xs bg-yellow-100 text-yellow-800 hover:bg-yellow-200" data-action="edit-order" data-id="${order.id}">Editar</button><button class="btn text-xs bg-blue-100 text-blue-800 hover:bg-blue-200" data-action="toggle-materials" data-id="${order.id}"><svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><button class="btn text-xs btn-danger" data-action="delete-order" data-id="${order.id}">Eliminar</button></div></div></div><ul class="p-4 space-y-1">${itemsHtml}</ul><div class="p-4 bg-stone-50 rounded-b-lg border-t flex justify-between items-center"><span class="font-bold text-blue-800">Cocción: ${formatMinutes(totalCookingTime)}</span><span class="font-bold text-stone-800">Total Venta: ${formatCurrency(totalSalePrice)}</span></div><div class="order-materials hidden p-4 border-t text-sm"></div>`;
                     ordersContainer.appendChild(orderCard);
@@ -482,7 +511,32 @@
             function renderTempOrderItems() { const container = document.getElementById('order-selected-recipes'); container.innerHTML = ''; if (newOrderModalEl.items.length === 0) { container.innerHTML = `<p class="text-stone-500 text-center py-4">Busca y agrega productos.</p>`; return; } newOrderModalEl.items.forEach((item, index) => { const recipe = recipes.find(r => r.id === item.recipeId); const div = document.createElement('div'); div.className = 'flex items-center justify-between p-2 bg-gray-50 rounded'; div.innerHTML = `<div class="flex items-center gap-2"><input type="number" min="1" value="${item.quantity}" class="w-16 p-1 border rounded order-item-quantity" data-index="${index}"><label>${recipe.name}</label></div><button type="button" class="text-red-500 font-bold order-item-remove" data-index="${index}">X</button>`; container.appendChild(div); }); }
             document.getElementById('order-selected-recipes').addEventListener('change', e => { if (e.target.classList.contains('order-item-quantity')) { const index = parseInt(e.target.dataset.index); const quantity = parseInt(e.target.value); if (quantity > 0) newOrderModalEl.items[index].quantity = quantity; } });
             document.getElementById('order-selected-recipes').addEventListener('click', e => { if (e.target.classList.contains('order-item-remove')) { const index = parseInt(e.target.dataset.index); newOrderModalEl.items.splice(index, 1); renderTempOrderItems(); } });
-            newOrderModalEl.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); const customerName = e.target.querySelector('#customer-name').value; const customerPhone = e.target.querySelector('#customer-phone').value; const deliveryDate = e.target.querySelector('#delivery-date').value; const slicingOption = e.target.querySelector('input[name="slicing"]:checked').value; const deliveryTimeSlot = e.target.querySelector('#delivery-time-slot').value; if (newOrderModalEl.items.length === 0) return alert('Debes seleccionar al menos un producto.'); try { await ordersCollection.add({ customerName, customerPhone, deliveryDate, slicingOption, deliveryTimeSlot, items: newOrderModalEl.items, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); closeModal(newOrderModalEl); } catch (error) { console.error(error); } });
+            newOrderModalEl.querySelector('form').addEventListener('submit', async e => { 
+                e.preventDefault(); 
+                const customerName = e.target.querySelector('#customer-name').value; 
+                const customerPhone = e.target.querySelector('#customer-phone').value; 
+                const deliveryDate = e.target.querySelector('#delivery-date').value; 
+                const slicingOption = e.target.querySelector('input[name="slicing"]:checked').value; 
+                
+                const selectedHours = [];
+                e.target.querySelectorAll('#new-order-hours-grid .hour-selected').forEach(btn => {
+                    selectedHours.push(parseInt(btn.dataset.hour));
+                });
+
+                if (newOrderModalEl.items.length === 0) return alert('Debes seleccionar al menos un producto.'); 
+                try { 
+                    await ordersCollection.add({ 
+                        customerName, 
+                        customerPhone, 
+                        deliveryDate, 
+                        slicingOption, 
+                        deliveryHours: selectedHours, 
+                        items: newOrderModalEl.items, 
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+                    }); 
+                    closeModal(newOrderModalEl); 
+                } catch (error) { console.error(error); } 
+            });
             ordersContainer.addEventListener('click', async e => {
                 const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; const order = orders.find(o => o.id === id); if (!order) return;
                 
@@ -508,7 +562,16 @@
                     form.querySelector('#edit-customer-name').value = order.customerName; 
                     form.querySelector('#edit-customer-phone').value = order.customerPhone; 
                     form.querySelector('#edit-delivery-date').value = order.deliveryDate; 
-                    form.querySelector('#edit-delivery-time-slot').value = order.deliveryTimeSlot || 'Cualquier horario';
+                    
+                    const editHoursGrid = form.querySelector('#edit-order-hours-grid');
+                    editHoursGrid.querySelectorAll('.hour-btn').forEach(btn => btn.classList.remove('hour-selected'));
+                    if (order.deliveryHours) {
+                        order.deliveryHours.forEach(hour => {
+                            const btn = editHoursGrid.querySelector(`[data-hour="${hour}"]`);
+                            if (btn) btn.classList.add('hour-selected');
+                        });
+                    }
+
                     const slicingValue = order.slicingOption || 'Sin asignar';
                     form.querySelector(`input[name="edit-slicing"][value="${slicingValue}"]`).checked = true;
                     openModal(editOrderModal); 
@@ -521,9 +584,14 @@
                 const customerPhone = e.target.querySelector('#edit-customer-phone').value; 
                 const deliveryDate = e.target.querySelector('#edit-delivery-date').value; 
                 const slicingOption = e.target.querySelector('input[name="edit-slicing"]:checked').value;
-                const deliveryTimeSlot = e.target.querySelector('#edit-delivery-time-slot').value;
+                
+                const selectedHours = [];
+                e.target.querySelectorAll('#edit-order-hours-grid .hour-selected').forEach(btn => {
+                    selectedHours.push(parseInt(btn.dataset.hour));
+                });
+
                 try { 
-                    await ordersCollection.doc(id).update({ customerName, customerPhone, deliveryDate, slicingOption, deliveryTimeSlot }); 
+                    await ordersCollection.doc(id).update({ customerName, customerPhone, deliveryDate, slicingOption, deliveryHours: selectedHours }); 
                     closeModal(editOrderModal); 
                 } catch (error) { console.error(error); } 
             });
@@ -538,7 +606,16 @@
                         let totalSale = 0;
                         const itemsHtml = (order.items || []).map(item => { totalSale += (item.salePrice || 0) * item.quantity; return `<li class="text-sm">${item.quantity} x ${item.name || 'Receta eliminada'}</li>`; }).join('');
                         const slicingHtml = order.slicingOption ? `<p class="text-xs text-gray-500"><strong>Corte:</strong> ${order.slicingOption}</p>`: '';
-                        const timeSlotHistoryHtml = order.deliveryTimeSlot ? `<p class="text-xs text-gray-500"><strong>Horario:</strong> ${order.deliveryTimeSlot}</p>`: '';
+                        
+                        let timeSlotHistoryHtml = '';
+                        if (order.deliveryHours && order.deliveryHours.length > 0) {
+                            const sortedHours = order.deliveryHours.sort((a,b) => a-b);
+                            const minHour = sortedHours[0];
+                            const maxHour = sortedHours[sortedHours.length - 1];
+                            const timeText = minHour === maxHour ? `a las ${minHour}hs` : `de ${minHour}hs a ${maxHour}hs`;
+                            timeSlotHistoryHtml = `<p class="text-xs text-gray-500"><strong>Horario:</strong> ${timeText}</p>`;
+                        }
+
                         return `<div class="p-4 border rounded-lg mb-2"><div class="flex justify-between"><div><p class="font-bold">${order.customerName}</p><p class="text-xs text-gray-500">Completado: ${new Date(order.completedAt.toDate()).toLocaleString('es-AR')}</p>${slicingHtml}${timeSlotHistoryHtml}</div><div class="flex items-center gap-2"><p class="font-bold">${formatCurrency(totalSale)}</p><button class="btn text-xs bg-yellow-100 text-yellow-800 hover:bg-yellow-200" data-action="uncomplete-order" data-id="${order.id}">Cancelar</button></div></div><ul class="list-disc list-inside mt-2">${itemsHtml}</ul></div>`;
                     }).join('');
                 } catch (error) { console.error("Error al cargar historial:", error); historyContent.innerHTML = '<p class="text-red-500">No se pudo cargar el historial.</p>'; }
@@ -555,7 +632,7 @@
                              customerPhone: orderData.customerPhone,
                              deliveryDate: orderData.deliveryDate,
                              slicingOption: orderData.slicingOption,
-                             deliveryTimeSlot: orderData.deliveryTimeSlot,
+                             deliveryHours: orderData.deliveryHours,
                              items: (orderData.items || []).map(item => ({recipeId: item.recipeId, quantity: item.quantity})),
                              createdAt: orderData.createdAt || firebase.firestore.FieldValue.serverTimestamp()
                          };
@@ -566,6 +643,28 @@
                      }
                  });
             });
+
+            // --- Hour Picker Logic ---
+            function generateHourGrid(containerId) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+                for (let i = 0; i < 24; i++) {
+                    const hourBtn = document.createElement('button');
+                    hourBtn.type = 'button';
+                    hourBtn.className = 'hour-btn rounded';
+                    hourBtn.textContent = `${i}hs`;
+                    hourBtn.dataset.hour = i;
+                    container.appendChild(hourBtn);
+                }
+                container.addEventListener('click', e => {
+                    if (e.target.classList.contains('hour-btn')) {
+                        e.target.classList.toggle('hour-selected');
+                    }
+                });
+            }
+
+            generateHourGrid('new-order-hours-grid');
+            generateHourGrid('edit-order-hours-grid');
         }
     });
     </script>
