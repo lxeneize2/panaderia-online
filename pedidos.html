@@ -3,261 +3,642 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hacer un Pedido | Mi Panadería</title>
+    <title>Pedidos | Tu Panadería</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Scripts de Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Scripts de Firebase --><script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #FBF9F6; color: #402E32; }
-        .font-serif { font-family: 'Playfair Display', serif; }
-        .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05); }
-        .btn { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 500; transition: all 0.2s ease-in-out; cursor: pointer; }
-        .btn-primary { background-color: #A97C50; color: white; }
-        .btn-primary:hover { background-color: #8C6239; }
-        .btn-secondary { background-color: #D6C3B3; color: #402E32; font-weight: 600; }
-        .btn-secondary:hover { background-color: #C1A892; }
-        input[type="text"], input[type="tel"] { border-radius: 0.5rem; border: 1px solid #D6C3B3; padding: 0.75rem; width: 100%; }
-        input:focus { outline: none; border-color: #A97C50; box-shadow: 0 0 0 2px rgba(169, 124, 80, 0.3); }
-        input[type="radio"] { 
-            width: auto;
-            accent-color: #A97C50;
+        body { font-family: 'Inter', sans-serif; background-color: #FDFBF8; }
+        .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); padding: 1rem; position: relative; overflow: hidden; }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; transition: all 0.2s ease-in-out; cursor: pointer; text-align: center; }
+        .btn-primary { background-color: #6D4C41; color: white; }
+        .btn-primary:hover { background-color: #4E342E; }
+        input[type="number"] { border-radius: 0.5rem; border: 1px solid #D1C4E9; padding: 0.5rem; width: 60px; text-align: center; }
+        input[type="number"]:focus { outline: none; border-color: #6D4C41; box-shadow: 0 0 0 2px #D1C4E9; }
+
+        .modal-container {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 1rem;
+            background-color: rgba(0,0,0,0.6); /* Fondo semi-transparente para modales */
         }
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(251, 249, 246, 0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.3s; }
-        .modal-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.5); padding: 1rem; }
+        .modal-container.hidden { display: none; }
+        .modal-content {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            position: relative;
+            z-index: 50;
+            width: 90%;
+            max-width: 700px; /* Ancho máximo para la publicación */
+            margin: auto;
+        }
+
+        /* Carousel styles for product cards */
+        .product-card-carousel {
+            position: relative;
+            width: 100%;
+            height: 150px; /* Fixed height for consistency */
+            overflow: hidden;
+            border-top-left-radius: 0.75rem;
+            border-top-right-radius: 0.75rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer; /* Indicates it's clickable */
+        }
+        .product-card-carousel-track {
+            display: flex;
+            transition: transform 0.3s ease-in-out;
+            height: 100%;
+        }
+        .product-card-carousel-slide {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f0f0; /* Placeholder background */
+        }
+        .product-card-carousel-slide img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Ensures image fits without cropping */
+        }
+        .carousel-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            padding: 0.3rem;
+            cursor: pointer;
+            z-index: 10;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 25px;
+            height: 25px;
+            font-size: 0.8rem;
+        }
+        .carousel-nav-btn.left { left: 0.5rem; }
+        .carousel-nav-btn.right { right: 0.5rem; }
+
+        /* Styles for the "Publication" Modal */
+        .publication-carousel-container {
+            position: relative;
+            width: 100%;
+            height: 300px; /* Larger height for publication modal */
+            overflow: hidden;
+            border-radius: 0.75rem;
+            background-color: #f0f0f0;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .publication-carousel-track {
+            display: flex;
+            transition: transform 0.3s ease-in-out;
+            height: 100%;
+        }
+        .publication-carousel-slide {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .publication-carousel-slide img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .publication-modal-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            z-index: 10;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .publication-modal-arrow.left { left: 0.5rem; }
+        .publication-modal-arrow.right { right: 0.5rem; }
+        .close-modal-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            z-index: 60;
+        }
     </style>
 </head>
 <body>
-    <div id="loading" class="loading-overlay">
-        <svg class="animate-spin h-8 w-8 text-[#A97C50]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-    </div>
-
-    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
-        <header class="text-center my-8 md:my-12">
-            <h1 class="text-4xl md:text-5xl font-serif text-[#402E32]">Nuestros Productos Artesanales</h1>
-            <p class="text-lg text-stone-600 mt-2">Elige tus favoritos y haz tu pedido.</p>
-        </header>
-
-        <div id="recipe-menu" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Las recetas se cargarán aquí -->
+    <div class="container mx-auto p-4 md:p-8">
+        <h1 class="text-3xl font-bold text-stone-700 mb-6 text-center">Nuestros Productos</h1>
+        
+        <div id="products-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <p class="text-center text-stone-500 col-span-full">Cargando productos...</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
-            <div class="lg:col-span-2">
-                <div class="card p-6">
-                    <h2 class="text-2xl font-serif text-stone-800 mb-4">Completa tus Datos</h2>
-                    <form id="order-form" class="space-y-4">
-                        <div>
-                            <label for="client-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre y Apellido</label>
-                            <input type="text" id="client-name" required placeholder="Tu nombre">
-                        </div>
-                         <div>
-                            <label for="client-phone" class="block text-sm font-medium text-stone-600 mb-1">Número de Teléfono</label>
-                            <input type="tel" id="client-phone" required placeholder="Para contactarte">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-stone-600 mb-1">¿Cómo prefieres el pan?</label>
-                            <div class="flex items-center gap-x-6 mt-2">
-                                <label class="flex items-center text-sm cursor-pointer">
-                                    <input type="radio" name="slicing-choice" value="Sin cortar" class="mr-2 h-4 w-4" checked>
-                                    Sin cortar
-                                </label>
-                                <label class="flex items-center text-sm cursor-pointer">
-                                    <input type="radio" name="slicing-choice" value="Cortado" class="mr-2 h-4 w-4">
-                                    Cortado
-                                </label>
-                            </div>
-                        </div>
-                        <button type="submit" id="submit-order-btn" class="btn btn-primary w-full !py-3 !text-base">Enviar Pedido</button>
-                    </form>
-                </div>
+        <div class="fixed bottom-4 right-4">
+            <button id="view-cart-btn" class="btn btn-primary flex items-center gap-2 shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                Ver Carrito (<span id="cart-item-count">0</span>)
+            </button>
+        </div>
+    </div>
+
+    <!-- Cart Modal --><div id="cart-modal" class="modal-container hidden">
+        <div class="modal-content max-w-lg">
+            <h2 class="text-2xl font-bold text-stone-700 mb-4">Tu Pedido</h2>
+            <div id="cart-items" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                <p class="text-stone-500">El carrito está vacío.</p>
             </div>
-            <div>
-                <div class="card p-6 sticky top-8">
-                    <h2 class="text-2xl font-serif text-stone-800 mb-4">Tu Pedido</h2>
-                    <div id="cart-items" class="space-y-3 mb-4 max-h-60 overflow-y-auto pr-2">
-                        <p class="text-stone-500">Tu carrito está vacío.</p>
+            <div class="mt-6 pt-4 border-t border-stone-200">
+                <div class="flex justify-between items-center text-xl font-bold text-stone-800 mb-4">
+                    <span>Total:</span>
+                    <span id="cart-total">$0.00</span>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label for="customer-name" class="block text-sm font-medium text-stone-600 mb-1">Tu Nombre</label>
+                        <input type="text" id="customer-name" placeholder="Ej: Juan Pérez" required class="w-full">
                     </div>
-                    <div class="border-t border-stone-200 pt-4 flex justify-between items-center">
-                        <span class="text-lg font-bold text-stone-800">Total:</span>
-                        <span id="cart-total" class="text-xl font-bold text-stone-800">$0.00</span>
+                    <div>
+                        <label for="customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Tu Teléfono (opcional)</label>
+                        <input type="tel" id="customer-phone" placeholder="Ej: 1123456789" class="w-full">
                     </div>
+                    <div>
+                        <label for="delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha de Entrega</label>
+                        <input type="date" id="delivery-date" required class="w-full">
+                    </div>
+                    <div>
+                        <label for="delivery-time-slot" class="block text-sm font-medium text-stone-600 mb-1">Franja Horaria de Entrega</label>
+                        <select id="delivery-time-slot" class="w-full">
+                            <option value="Cualquier horario">Cualquier horario</option>
+                            <option value="Mañana (9-13hs)">Mañana (9-13hs)</option>
+                            <option value="Tarde (14-18hs)">Tarde (14-18hs)</option>
+                            <option value="Tarde (18-21hs)">Tarde (18-21hs)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label>
+                        <div class="flex flex-wrap gap-x-4 gap-y-2">
+                            <label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin asignar" class="mr-1" checked>Sin asignar</label>
+                            <label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin cortar" class="mr-1">Sin cortar</label>
+                            <label class="flex items-center text-sm"><input type="radio" name="slicing" value="Cortado" class="mr-1">Cortado</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-4 mt-6">
+                    <button id="close-cart-modal" class="btn bg-stone-200 text-stone-700">Cerrar</button>
+                    <button id="submit-order-btn" class="btn btn-primary">Confirmar Pedido</button>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div id="success-modal" class="modal-container hidden">
-        <div class="card text-center p-8 max-w-sm mx-auto">
-            <h2 class="text-2xl font-serif text-green-600 mb-4">¡Pedido Enviado!</h2>
-            <p class="text-stone-600 mb-6">Gracias por tu pedido. Te contactaremos a la brevedad para confirmar.</p>
-            <button id="close-success-modal" class="btn btn-primary">Aceptar</button>
+
+    <!-- Publication Modal --><div id="publication-modal" class="modal-container hidden">
+        <div class="modal-content max-w-2xl !p-0">
+            <button class="close-modal-btn" id="close-publication-modal">&times;</button>
+            <div class="grid grid-cols-1 md:grid-cols-2 h-full">
+                <!-- Publication Carousel Container --><div class="publication-carousel-container flex-shrink-0 md:h-auto h-64">
+                    <div id="publication-carousel-track" class="publication-carousel-track">
+                        <!-- Dynamic slides here --></div>
+                    <button type="button" class="publication-modal-arrow left" id="publication-carousel-prev">&#10094;</button>
+                    <button type="button" class="publication-modal-arrow right" id="publication-carousel-next">&#10095;</button>
+                </div>
+
+                <!-- Publication Details --><div class="p-4 md:p-6 flex flex-col justify-between">
+                    <div>
+                        <h3 id="publication-recipe-name" class="text-2xl font-bold text-stone-700 mb-2"></h3>
+                        <p id="publication-recipe-description" class="text-stone-600 text-sm mb-4"></p>
+                        <p id="publication-recipe-price" class="text-xl font-bold text-stone-800 mb-4"></p>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 mt-auto pt-4 border-t border-stone-200">
+                        <input type="number" id="publication-quantity-input" value="1" min="1" class="flex-grow">
+                        <button id="publication-add-to-cart-btn" class="btn btn-primary flex-shrink-0">Agregar</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const firebaseConfig = {
-            apiKey: "AIzaSyBY-BS1UfJjTcaQWBkqLfcIT6sCngfaCmU",
-            authDomain: "mi-panaderia-online.firebaseapp.com",
-            projectId: "mi-panaderia-online",
-            storageBucket: "mi-panaderia-online.firebasestorage.app",
-            messagingSenderId: "880103240107",
-            appId: "1:880103240107:web:7aef22bea8abdeae7fa2ee"
-        };
-
-        try { firebase.initializeApp(firebaseConfig); } catch (e) { console.error("Firebase ya fue inicializado."); }
-        
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-        const recipesCollection = db.collection('recipes');
-        const ordersCollection = db.collection('orders');
-
-        let recipes = []; let cart = [];
-
-        const loadingEl = document.getElementById('loading');
-        const recipeMenuEl = document.getElementById('recipe-menu');
-        const cartItemsEl = document.getElementById('cart-items');
-        const cartTotalEl = document.getElementById('cart-total');
-        const orderForm = document.getElementById('order-form');
-        const submitOrderBtn = document.getElementById('submit-order-btn');
-        const successModal = document.getElementById('success-modal');
-        const closeSuccessModalBtn = document.getElementById('close-success-modal');
-        
-        const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount || 0);
-
-        function renderMenu() {
-            recipeMenuEl.innerHTML = '';
-            if (recipes.length === 0) {
-                recipeMenuEl.innerHTML = '<p class="text-center text-stone-500 md:col-span-2 lg:col-span-3">No hay productos disponibles.</p>';
-                return;
-            }
-            recipes.forEach(recipe => {
-                const card = document.createElement('div');
-                card.className = 'card flex flex-col overflow-hidden transform hover:-translate-y-1 transition-transform duration-300';
-                const imageUrl = recipe.imageUrl || `https://placehold.co/600x400/FBF9F6/402E32?text=${encodeURIComponent(recipe.name)}`;
-                card.innerHTML = `
-                    <img src="${imageUrl}" alt="${recipe.name}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/FBF9F6/402E32?text=Imagen%20no%20disponible';">
-                    <div class="p-4 flex flex-col flex-grow">
-                        <h3 class="text-xl font-serif text-stone-800">${recipe.name}</h3>
-                        <p class="text-lg font-medium text-[#A97C50] mt-1">${formatCurrency(recipe.salePrice)}</p>
-                        <div class="flex items-center gap-2 mt-4 pt-4 border-t border-stone-100">
-                            <input type="number" value="1" min="1" class="w-16 p-2 border rounded-md text-center" data-quantity-id="${recipe.id}">
-                            <button class="btn btn-secondary flex-grow" data-id="${recipe.id}">Agregar</button>
-                        </div>
-                    </div>
-                `;
-                recipeMenuEl.appendChild(card);
-            });
-        }
-        
-        function renderCart() {
-            cartItemsEl.innerHTML = '';
-            if (cart.length === 0) {
-                 cartItemsEl.innerHTML = '<p class="text-stone-500">Tu carrito está vacío.</p>';
-                 cartTotalEl.textContent = formatCurrency(0);
-                 return;
-            }
-            let total = 0;
-            cart.forEach(item => {
-                const itemEl = document.createElement('div');
-                itemEl.className = 'flex justify-between items-center animate-pulse once';
-                itemEl.innerHTML = `
-                    <div>
-                        <span class="font-medium text-stone-700">${item.name}</span>
-                        <div class="flex items-center gap-2">
-                            <button class="text-lg font-bold p-1 text-stone-400 hover:text-red-500" data-action="decrease" data-id="${item.recipeId}">-</button>
-                            <span class="text-sm font-bold">${item.quantity}</span>
-                            <button class="text-lg font-bold p-1 text-stone-400 hover:text-green-500" data-action="increase" data-id="${item.recipeId}">+</button>
-                        </div>
-                    </div>
-                    <span class="font-medium">${formatCurrency(item.salePrice * item.quantity)}</span>
-                `;
-                cartItemsEl.appendChild(itemEl);
-                total += item.salePrice * item.quantity;
-            });
-            cartTotalEl.textContent = formatCurrency(total);
-        }
-        
-        function addToCart(recipeId, quantity) {
-            const recipe = recipes.find(r => r.id === recipeId);
-            if (!recipe || quantity < 1) return;
-            const existingItem = cart.find(item => item.recipeId === recipeId);
-            if (existingItem) {
-                existingItem.quantity += quantity;
-            } else {
-                cart.push({ recipeId: recipe.id, name: recipe.name, quantity, salePrice: recipe.salePrice });
-            }
-            renderCart();
-        }
-        
-        function updateCartQuantity(recipeId, action) {
-             const itemIndex = cart.findIndex(item => item.recipeId === recipeId);
-             if (itemIndex === -1) return;
-             if (action === 'increase') { cart[itemIndex].quantity++; }
-             else if (action === 'decrease') {
-                 cart[itemIndex].quantity--;
-                 if (cart[itemIndex].quantity === 0) { cart.splice(itemIndex, 1); }
-             }
-             renderCart();
-        }
-
-        function loadRecipes() {
-            recipesCollection.onSnapshot(snapshot => {
-                recipes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderMenu();
-                loadingEl.classList.add('hidden');
-            }, error => { console.error("Error al cargar recetas:", error); loadingEl.classList.add('hidden'); recipeMenuEl.innerHTML = '<p class="text-center text-red-500">No se pudieron cargar los productos.</p>'; });
-        }
-        
-        async function handleOrderSubmit(e) {
-            e.preventDefault();
-            if (cart.length === 0) { alert("Tu carrito está vacío."); return; }
-            submitOrderBtn.disabled = true; submitOrderBtn.textContent = "Enviando...";
-
-            const slicingOption = document.querySelector('input[name="slicing-choice"]:checked').value;
-
-            const orderData = {
-                customerName: document.getElementById('client-name').value,
-                customerPhone: document.getElementById('client-phone').value,
-                deliveryDate: '',
-                slicingOption: slicingOption,
-                items: cart.map(item => ({ recipeId: item.recipeId, quantity: item.quantity })),
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        document.addEventListener('DOMContentLoaded', () => {
+            const firebaseConfig = {
+                apiKey: "AIzaSyBY-BS1UfJjTcaQWBkqLfcIT6sCngfaCmU",
+                authDomain: "mi-panaderia-online.firebaseapp.com",
+                projectId: "mi-panaderia-online",
+                storageBucket: "mi-panaderia-online.appspot.com",
+                messagingSenderId: "880103240107",
+                appId: "1:880103240107:web:7aef22bea8abdeae7fa2ee"
             };
-            try { await ordersCollection.add(orderData); successModal.classList.remove('hidden'); }
-            catch (error) { console.error("Error al enviar el pedido:", error); alert("Hubo un problema al enviar tu pedido."); }
-            finally { submitOrderBtn.disabled = false; submitOrderBtn.textContent = "Enviar Pedido"; }
-        }
-        
-        recipeMenuEl.addEventListener('click', e => {
-            if (e.target.tagName === 'BUTTON') {
-                const recipeId = e.target.dataset.id;
-                const quantityInput = e.target.previousElementSibling;
-                const quantity = parseInt(quantityInput.value);
-                addToCart(recipeId, quantity);
-                e.target.textContent = "¡Agregado!";
-                quantityInput.value = 1;
-                setTimeout(() => { e.target.textContent = "Agregar"; }, 1000);
-            }
-        });
-        
-        cartItemsEl.addEventListener('click', e => { if (e.target.tagName === 'BUTTON') { const action = e.target.dataset.action; const recipeId = e.target.dataset.id; updateCartQuantity(recipeId, action); } });
-        orderForm.addEventListener('submit', handleOrderSubmit);
-        closeSuccessModalBtn.addEventListener('click', () => { successModal.classList.add('hidden'); cart = []; renderCart(); orderForm.reset(); });
+            try { firebase.initializeApp(firebaseConfig); } catch (e) { console.error("Firebase ya fue inicializado."); }
+            
+            const db = firebase.firestore();
+            const recipesCollection = db.collection('recipes');
+            const ordersCollection = db.collection('orders');
 
-        auth.onAuthStateChanged(user => {
-            if (!user) { auth.signInAnonymously().catch(error => console.error("Fallo el inicio de sesión anónimo:", error)); }
-            else { loadRecipes(); }
+            const productsContainer = document.getElementById('products-container');
+            const cartModal = document.getElementById('cart-modal');
+            const viewCartBtn = document.getElementById('view-cart-btn');
+            const closeCartModalBtn = document.getElementById('close-cart-modal');
+            const cartItemsContainer = document.getElementById('cart-items');
+            const cartTotalEl = document.getElementById('cart-total');
+            const cartItemCountEl = document.getElementById('cart-item-count');
+            const submitOrderBtn = document.getElementById('submit-order-btn');
+
+            // Publication Modal elements
+            const publicationModal = document.getElementById('publication-modal');
+            const closePublicationModalBtn = document.getElementById('close-publication-modal');
+            const publicationCarouselTrack = document.getElementById('publication-carousel-track');
+            const publicationCarouselPrevBtn = document.getElementById('publication-carousel-prev');
+            const publicationCarouselNextBtn = document.getElementById('publication-carousel-next');
+            const publicationRecipeNameEl = document.getElementById('publication-recipe-name');
+            const publicationRecipeDescriptionEl = document.getElementById('publication-recipe-description');
+            const publicationRecipePriceEl = document.getElementById('publication-recipe-price');
+            const publicationQuantityInput = document.getElementById('publication-quantity-input');
+            const publicationAddToCartBtn = document.getElementById('publication-add-to-cart-btn');
+
+            let cart = JSON.parse(localStorage.getItem('bakeryCart')) || [];
+            let recipes = []; // To store all recipes
+
+            const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount || 0);
+
+            // --- Product Listing and Card Carousel Logic ---
+            function renderProducts() {
+                productsContainer.innerHTML = '<p class="text-center text-stone-500 col-span-full">Cargando productos...</p>';
+                recipesCollection.orderBy('name').onSnapshot(snapshot => {
+                    recipes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    productsContainer.innerHTML = '';
+                    if (recipes.length === 0) {
+                        productsContainer.innerHTML = '<p class="text-center text-stone-500 col-span-full">No hay productos disponibles.</p>';
+                        return;
+                    }
+
+                    recipes.forEach(recipe => {
+                        const productCard = document.createElement('div');
+                        productCard.className = 'card pb-4';
+                        productCard.dataset.recipeId = recipe.id; // Store recipe ID
+
+                        const imageUrls = recipe.imageUrls || [];
+                        const firstImage = imageUrls[0] || 'https://via.placeholder.com/150?text=Sin+Imagen'; // Default placeholder
+
+                        let carouselHtml = '';
+                        if (imageUrls.length > 0) {
+                            carouselHtml = `
+                                <div class="product-card-carousel" data-recipe-id="${recipe.id}">
+                                    <div class="product-card-carousel-track">
+                                        ${imageUrls.map(url => `<div class="product-card-carousel-slide"><img src="${url}" alt="${recipe.name}"></div>`).join('')}
+                                    </div>
+                                    ${imageUrls.length > 1 ? `
+                                        <button type="button" class="carousel-nav-btn left" data-direction="-1">&#10094;</button>
+                                        <button type="button" class="carousel-nav-btn right" data-direction="1">&#10095;</button>
+                                    ` : ''}
+                                </div>
+                            `;
+                        } else {
+                            carouselHtml = `
+                                <div class="product-card-carousel flex items-center justify-center" data-recipe-id="${recipe.id}">
+                                    <img src="${firstImage}" alt="${recipe.name}" class="max-w-full max-h-full object-contain">
+                                </div>
+                            `;
+                        }
+
+                        productCard.innerHTML = `
+                            ${carouselHtml}
+                            <div class="px-4">
+                                <h3 class="font-bold text-lg text-stone-800 mb-1">${recipe.name}</h3>
+                                <p class="text-stone-700 text-xl font-semibold mb-3">${formatCurrency(recipe.salePrice || 0)}</p>
+                                <div class="flex items-center justify-between gap-2">
+                                    <input type="number" value="1" min="1" class="add-to-cart-quantity w-20">
+                                    <button class="btn btn-primary add-to-cart-btn" data-recipe-id="${recipe.id}">Agregar</button>
+                                </div>
+                            </div>
+                        `;
+                        productsContainer.appendChild(productCard);
+                    });
+
+                    // Initialize card carousels
+                    productsContainer.querySelectorAll('.product-card-carousel').forEach(initCardCarousel);
+                });
+            }
+
+            function initCardCarousel(carouselEl) {
+                const track = carouselEl.querySelector('.product-card-carousel-track');
+                const slides = carouselEl.querySelectorAll('.product-card-carousel-slide');
+                const prevBtn = carouselEl.querySelector('.carousel-nav-btn.left');
+                const nextBtn = carouselEl.querySelector('.carousel-nav-btn.right');
+                
+                let currentSlide = 0;
+                if (slides.length <= 1) {
+                    if (prevBtn) prevBtn.style.display = 'none';
+                    if (nextBtn) nextBtn.style.display = 'none';
+                    return;
+                }
+
+                function updateCarousel() {
+                    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+                }
+
+                prevBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent opening publication modal
+                    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                    updateCarousel();
+                });
+
+                nextBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent opening publication modal
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    updateCarousel();
+                });
+
+                // Make the entire card image area clickable to open publication modal
+                carouselEl.addEventListener('click', (e) => {
+                    const recipeId = carouselEl.dataset.recipeId;
+                    const recipe = recipes.find(r => r.id === recipeId);
+                    if (recipe) openPublicationModal(recipe);
+                });
+            }
+
+
+            // --- Cart Logic ---
+            function updateCartCount() {
+                cartItemCountEl.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+            }
+
+            function renderCartItems() {
+                cartItemsContainer.innerHTML = '';
+                let total = 0;
+
+                if (cart.length === 0) {
+                    cartItemsContainer.innerHTML = '<p class="text-stone-500">El carrito está vacío.</p>';
+                    cartTotalEl.textContent = formatCurrency(0);
+                    return;
+                }
+
+                cart.forEach(item => {
+                    const recipe = recipes.find(r => r.id === item.recipeId);
+                    if (!recipe) return; // Skip if recipe not found
+
+                    const itemTotal = recipe.salePrice * item.quantity;
+                    total += itemTotal;
+
+                    const cartItemEl = document.createElement('div');
+                    cartItemEl.className = 'flex items-center justify-between bg-stone-50 p-3 rounded-md';
+                    cartItemEl.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <input type="number" value="${item.quantity}" min="1" class="cart-item-quantity w-16" data-recipe-id="${recipe.id}">
+                            <span>${recipe.name}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span>${formatCurrency(itemTotal)}</span>
+                            <button class="text-red-500 hover:text-red-700 font-bold ml-2 remove-from-cart-btn" data-recipe-id="${recipe.id}">&times;</button>
+                        </div>
+                    `;
+                    cartItemsContainer.appendChild(cartItemEl);
+                });
+
+                cartTotalEl.textContent = formatCurrency(total);
+            }
+
+            function addToCart(recipeId, quantity) {
+                const existingItemIndex = cart.findIndex(item => item.recipeId === recipeId);
+                if (existingItemIndex > -1) {
+                    cart[existingItemIndex].quantity += quantity;
+                } else {
+                    cart.push({ recipeId, quantity });
+                }
+                localStorage.setItem('bakeryCart', JSON.stringify(cart));
+                updateCartCount();
+                renderCartItems(); // Re-render cart in modal if open
+            }
+
+            function updateCartItemQuantity(recipeId, newQuantity) {
+                const item = cart.find(item => item.recipeId === recipeId);
+                if (item) {
+                    item.quantity = newQuantity;
+                    if (item.quantity <= 0) {
+                        removeFromCart(recipeId);
+                    }
+                    localStorage.setItem('bakeryCart', JSON.stringify(cart));
+                    updateCartCount();
+                    renderCartItems();
+                }
+            }
+
+            function removeFromCart(recipeId) {
+                cart = cart.filter(item => item.recipeId !== recipeId);
+                localStorage.setItem('bakeryCart', JSON.stringify(cart));
+                updateCartCount();
+                renderCartItems();
+            }
+
+            // --- Event Listeners ---
+            productsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('add-to-cart-btn')) {
+                    const recipeId = e.target.dataset.recipeId;
+                    const quantityInput = e.target.previousElementSibling; // The input field
+                    const quantity = parseInt(quantityInput.value);
+                    if (quantity > 0) {
+                        addToCart(recipeId, quantity);
+                        alert(`${quantity} producto(s) agregado(s) al carrito.`);
+                    }
+                }
+            });
+
+            viewCartBtn.addEventListener('click', () => {
+                renderCartItems();
+                cartModal.classList.remove('hidden');
+                // Set default delivery date to tomorrow
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                document.getElementById('delivery-date').value = tomorrow.toISOString().split('T')[0];
+            });
+
+            closeCartModalBtn.addEventListener('click', () => {
+                cartModal.classList.add('hidden');
+            });
+            // Also close cart modal if clicked outside content
+            cartModal.addEventListener('click', (e) => {
+                if (e.target === cartModal) {
+                    cartModal.classList.add('hidden');
+                }
+            });
+
+            cartItemsContainer.addEventListener('change', (e) => {
+                if (e.target.classList.contains('cart-item-quantity')) {
+                    const recipeId = e.target.dataset.recipeId;
+                    const newQuantity = parseInt(e.target.value);
+                    updateCartItemQuantity(recipeId, newQuantity);
+                }
+            });
+
+            cartItemsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-from-cart-btn')) {
+                    const recipeId = e.target.dataset.recipeId;
+                    removeFromCart(recipeId);
+                }
+            });
+
+            submitOrderBtn.addEventListener('click', async () => {
+                if (cart.length === 0) {
+                    alert('Tu carrito está vacío.');
+                    return;
+                }
+
+                const customerName = document.getElementById('customer-name').value;
+                const customerPhone = document.getElementById('customer-phone').value;
+                const deliveryDate = document.getElementById('delivery-date').value;
+                const slicingOption = document.querySelector('input[name="slicing"]:checked').value;
+                const deliveryTimeSlot = document.getElementById('delivery-time-slot').value;
+
+
+                if (!customerName || !deliveryDate) {
+                    alert('Por favor, ingresa tu nombre y la fecha de entrega.');
+                    return;
+                }
+
+                const orderItems = cart.map(item => ({
+                    recipeId: item.recipeId,
+                    quantity: item.quantity
+                }));
+
+                try {
+                    await ordersCollection.add({
+                        customerName,
+                        customerPhone,
+                        deliveryDate,
+                        slicingOption,
+                        deliveryTimeSlot,
+                        items: orderItems,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    alert('¡Pedido realizado con éxito! Nos pondremos en contacto pronto.');
+                    cart = [];
+                    localStorage.removeItem('bakeryCart');
+                    updateCartCount();
+                    cartModal.classList.add('hidden');
+                } catch (error) {
+                    console.error('Error al enviar el pedido:', error);
+                    alert('Hubo un error al procesar tu pedido. Inténtalo de nuevo.');
+                }
+            });
+
+            // --- Publication Modal Logic ---
+            let currentPublicationRecipe = null;
+            let currentPublicationSlide = 0;
+
+            function openPublicationModal(recipe) {
+                currentPublicationRecipe = recipe;
+                publicationRecipeNameEl.textContent = recipe.name;
+                publicationRecipeDescriptionEl.textContent = recipe.description || 'Sin descripción.';
+                publicationRecipePriceEl.textContent = formatCurrency(recipe.salePrice || 0);
+                publicationQuantityInput.value = 1; // Reset quantity
+
+                renderPublicationCarousel(recipe.imageUrls || []);
+                publicationModal.classList.remove('hidden');
+            }
+
+            function renderPublicationCarousel(imageUrls) {
+                publicationCarouselTrack.innerHTML = '';
+                if (imageUrls.length === 0) {
+                    publicationCarouselTrack.innerHTML = '<div class="publication-carousel-slide"><img src="https://via.placeholder.com/300?text=Sin+Imagen" alt="Sin imagen"></div>';
+                    publicationCarouselPrevBtn.classList.add('hidden');
+                    publicationCarouselNextBtn.classList.add('hidden');
+                } else {
+                    imageUrls.forEach((url, index) => {
+                        const slide = document.createElement('div');
+                        slide.className = 'publication-carousel-slide';
+                        slide.innerHTML = `<img src="${url}" alt="Imagen de ${currentPublicationRecipe.name} ${index + 1}">`;
+                        publicationCarouselTrack.appendChild(slide);
+                    });
+                    publicationCarouselPrevBtn.classList.toggle('hidden', imageUrls.length <= 1);
+                    publicationCarouselNextBtn.classList.toggle('hidden', imageUrls.length <= 1);
+                }
+                
+                // Adjust track width and initial position
+                publicationCarouselTrack.style.width = `${imageUrls.length > 0 ? imageUrls.length * 100 : 100}%`;
+                currentPublicationSlide = 0; // Reset to first slide
+                updatePublicationCarouselPosition();
+            }
+
+            function updatePublicationCarouselPosition() {
+                if (!currentPublicationRecipe || !currentPublicationRecipe.imageUrls || currentPublicationRecipe.imageUrls.length === 0) return;
+                const offset = -currentPublicationSlide * (100 / currentPublicationRecipe.imageUrls.length);
+                publicationCarouselTrack.style.transform = `translateX(${offset}%)`;
+            }
+
+            publicationCarouselPrevBtn.addEventListener('click', () => {
+                if (!currentPublicationRecipe || !currentPublicationRecipe.imageUrls || currentPublicationRecipe.imageUrls.length === 0) return;
+                currentPublicationSlide = (currentPublicationSlide - 1 + currentPublicationRecipe.imageUrls.length) % currentPublicationRecipe.imageUrls.length;
+                updatePublicationCarouselPosition();
+            });
+
+            publicationCarouselNextBtn.addEventListener('click', () => {
+                if (!currentPublicationRecipe || !currentPublicationRecipe.imageUrls || currentPublicationRecipe.imageUrls.length === 0) return;
+                currentPublicationSlide = (currentPublicationSlide + 1) % currentPublicationRecipe.imageUrls.length;
+                updatePublicationCarouselPosition();
+            });
+
+            publicationAddToCartBtn.addEventListener('click', () => {
+                if (currentPublicationRecipe) {
+                    const quantity = parseInt(publicationQuantityInput.value);
+                    if (quantity > 0) {
+                        addToCart(currentPublicationRecipe.id, quantity);
+                        alert(`${quantity} producto(s) de ${currentPublicationRecipe.name} agregado(s) al carrito.`);
+                        publicationModal.classList.add('hidden');
+                    }
+                }
+            });
+
+            closePublicationModalBtn.addEventListener('click', () => {
+                publicationModal.classList.add('hidden');
+            });
+
+            // Close publication modal if clicked outside content
+            publicationModal.addEventListener('click', (e) => {
+                if (e.target === publicationModal) {
+                    publicationModal.classList.add('hidden');
+                }
+            });
+
+
+            // Initial load
+            updateCartCount();
+            renderProducts();
         });
-    });
     </script>
 </body>
 </html>
+
