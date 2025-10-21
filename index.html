@@ -100,9 +100,13 @@
                     <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
                         <div class="lg:col-span-3 space-y-6"><div class="card !overflow-visible"><div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"><h2 class="text-2xl font-bold text-stone-700">Pedidos Activos</h2><button id="add-order-btn" class="btn btn-primary w-full sm:w-auto">Crear Nuevo Pedido</button></div><div id="orders-container" class="space-y-4"><p class="text-center text-stone-500">Aún no hay pedidos activos.</p></div></div></div>
                         <div class="lg:col-span-2 space-y-6">
-                            <div class="card !overflow-visible"><h3 class="text-xl font-bold text-stone-700 mb-4">Lista de Compras Global</h3><p class="text-sm text-stone-500 mb-4">Materiales para todos los pedidos activos.</p><ul id="shopping-list" class="space-y-2 text-stone-600"><li>Crea un pedido para ver los materiales.</li></ul></div>
+                            <div id="agenda-container" class="card !overflow-visible">
+                                <!-- La agenda semanal se generará aquí -->
+                            </div>
                             <div class="card !overflow-visible wood-texture text-white"><h3 class="text-xl font-bold mb-2">Costo Total de Producción</h3><p id="total-production-cost" class="text-4xl font-bold">$0.00</p></div>
+                            <div class="card !overflow-visible bg-green-600 text-white"><h3 class="text-xl font-bold mb-2">Total a Recaudar</h3><p id="total-revenue" class="text-4xl font-bold">$0.00</p></div>
                             <div class="card !overflow-visible fire-texture text-white"><h3 class="text-xl font-bold mb-2">Tiempo Total de Cocción</h3><p id="total-cooking-time" class="text-4xl font-bold">0 min</p></div>
+                            <div class="card !overflow-visible"><h3 class="text-xl font-bold text-stone-700 mb-4">Lista de Compras Global</h3><p class="text-sm text-stone-500 mb-4">Materiales para todos los pedidos activos.</p><ul id="shopping-list" class="space-y-2 text-stone-600"><li>Crea un pedido para ver los materiales.</li></ul></div>
                         </div>
                     </div>
                 </section>
@@ -179,6 +183,7 @@
             const recipesList = document.getElementById('recipes-list');
             const shoppingListEl = document.getElementById('shopping-list');
             const totalProductionCostEl = document.getElementById('total-production-cost');
+            const totalRevenueEl = document.getElementById('total-revenue');
             const totalCookingTimeEl = document.getElementById('total-cooking-time');
             const ordersContainer = document.getElementById('orders-container');
             const materialModal = document.getElementById('material-modal');
@@ -219,7 +224,7 @@
                 return formatted.charAt(0).toUpperCase() + formatted.slice(1);
             };
 
-            const renderAll = () => { renderMaterialsTable(); renderRecipesList(); renderOrders(); renderGlobalShoppingListAndTotalCost(); };
+            const renderAll = () => { renderMaterialsTable(); renderRecipesList(); renderOrders(); renderGlobalStats(); renderAgenda(); };
             const renderMaterialsTable = () => {
                 materialsTable.innerHTML = ''; if (materials.length === 0) { materialsTable.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-stone-500">Aún no hay materiales.</td></tr>`; return; }
                 materials.forEach(material => {
@@ -243,12 +248,95 @@
                     ordersContainer.appendChild(orderCard);
                 });
             };
-            const renderGlobalShoppingListAndTotalCost = () => {
-                const totalIngredients = {}; let totalCost = 0; let totalCookTime = 0;
-                orders.forEach(order => { (order.items || []).forEach(item => { const recipe = recipes.find(r => r.id === item.recipeId); if (!recipe) return; totalCost += calculateRecipeCost(recipe.id) * item.quantity; totalCookTime += (recipe.cookingTime || 0) * item.quantity; (recipe.ingredients || []).forEach(ing => { const material = materials.find(m => m.id === ing.materialId); if (!material) return; if (!totalIngredients[material.name]) totalIngredients[material.name] = 0; totalIngredients[material.name] += ing.grams * item.quantity; }); }); });
+            const renderGlobalStats = () => {
+                const totalIngredients = {}; 
+                let totalCost = 0; 
+                let totalCookTime = 0;
+                let totalRevenue = 0;
+
+                orders.forEach(order => { 
+                    (order.items || []).forEach(item => { 
+                        const recipe = recipes.find(r => r.id === item.recipeId); 
+                        if (!recipe) return; 
+
+                        totalRevenue += (recipe.salePrice || 0) * item.quantity;
+                        totalCost += calculateRecipeCost(recipe.id) * item.quantity; 
+                        totalCookTime += (recipe.cookingTime || 0) * item.quantity; 
+
+                        (recipe.ingredients || []).forEach(ing => { 
+                            const material = materials.find(m => m.id === ing.materialId); 
+                            if (!material) return; 
+                            if (!totalIngredients[material.name]) totalIngredients[material.name] = 0; 
+                            totalIngredients[material.name] += ing.grams * item.quantity; 
+                        }); 
+                    }); 
+                });
+
                 shoppingListEl.innerHTML = Object.keys(totalIngredients).length === 0 ? `<li>Crea un pedido para ver los materiales.</li>` : Object.keys(totalIngredients).sort().map(name => `<li class="flex justify-between"><span>${name}</span> <strong>${totalIngredients[name].toFixed(0)} gr</strong></li>`).join('');
                 totalProductionCostEl.textContent = formatCurrency(totalCost);
+                totalRevenueEl.textContent = formatCurrency(totalRevenue);
                 totalCookingTimeEl.textContent = formatMinutes(totalCookTime);
+            };
+            const renderAgenda = () => {
+                const agendaContainer = document.getElementById('agenda-container');
+                if (!agendaContainer) return;
+
+                const weekDates = [];
+                const dayNames = [];
+                const dayInitials = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                for (let i = 0; i < 7; i++) {
+                    const day = new Date(today);
+                    day.setDate(today.getDate() + i);
+                    weekDates.push(day);
+                    dayNames.push(dayInitials[day.getDay()]);
+                }
+
+                const toYYYYMMDD = (date) => date.toISOString().split('T')[0];
+                const weekDateStrings = weekDates.map(toYYYYMMDD);
+                
+                const agendaData = {};
+                const futureOrders = orders.filter(order => {
+                    if (!order.deliveryDate) return false;
+                    const orderDate = new Date(order.deliveryDate + 'T00:00:00');
+                    return orderDate >= today;
+                });
+                
+                const ordersForAgenda = futureOrders.filter(order => weekDateStrings.includes(order.deliveryDate));
+                
+                ordersForAgenda.forEach(order => {
+                    const date = order.deliveryDate;
+                    if (!agendaData[date]) agendaData[date] = {};
+                    (order.items || []).forEach(item => {
+                        if (!agendaData[date][item.recipeId]) agendaData[date][item.recipeId] = 0;
+                        agendaData[date][item.recipeId] += item.quantity;
+                    });
+                });
+
+                const activeRecipeIds = new Set();
+                ordersForAgenda.forEach(o => o.items.forEach(i => activeRecipeIds.add(i.recipeId)));
+                const activeRecipes = recipes.filter(r => activeRecipeIds.has(r.id)).sort((a, b) => a.name.localeCompare(b.name));
+
+                if (activeRecipes.length === 0) {
+                    agendaContainer.innerHTML = `<h3 class="text-xl font-bold text-stone-700 mb-4">Próximos 7 Días</h3><p class="text-stone-500 text-center">No hay entregas programadas.</p>`;
+                    return;
+                }
+                
+                const headerHtml = `<tr><th class="px-4 py-2 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Receta</th>${dayNames.map(day => `<th class="px-2 py-2 text-center text-xs font-medium text-stone-500 uppercase tracking-wider">${day}</th>`).join('')}</tr>`;
+
+                const bodyHtml = activeRecipes.map(recipe => {
+                    const rowCells = weekDates.map(date => {
+                        const dateStr = toYYYYMMDD(date);
+                        const quantity = agendaData[dateStr]?.[recipe.id] || 0;
+                        return `<td class="px-2 py-2 text-center whitespace-nowrap text-sm font-medium ${quantity > 0 ? 'text-stone-900 bg-emerald-50' : 'text-stone-400'}">${quantity > 0 ? quantity : '-'}</td>`;
+                    }).join('');
+
+                    return `<tr class="border-t border-stone-200"><td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-stone-700">${recipe.name}</td>${rowCells}</tr>`;
+                }).join('');
+
+                agendaContainer.innerHTML = `<h3 class="text-xl font-bold text-stone-700 mb-4">Próximos 7 Días</h3><div class="overflow-x-auto"><table class="min-w-full divide-y divide-stone-200"><thead class="bg-stone-50">${headerHtml}</thead><tbody class="bg-white divide-y divide-stone-200">${bodyHtml}</tbody></table></div>`;
             };
             const calculateRecipeCost = (recipeId) => { const recipe = recipes.find(r => r.id === recipeId); if (!recipe || !recipe.ingredients) return 0; return recipe.ingredients.reduce((total, ingredient) => { const material = materials.find(m => m.id === ingredient.materialId); if (!material) return total; const pricePerGram = (material.price / material.weight) || 0; return total + (pricePerGram * ingredient.grams); }, 0); };
             function openModal(modalEl) { modalEl.classList.remove('hidden'); }
