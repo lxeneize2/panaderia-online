@@ -1081,26 +1081,32 @@
                 let localRemaining = remainingSeconds;
 
                 timers[uniqueId] = setInterval(() => {
+                    if (!productionState[uniqueId] || productionState[uniqueId].status !== 'in-progress') { 
+                        clearInterval(timers[uniqueId]);
+                        delete timers[uniqueId]; 
+                        return;
+                    }
+
+                    localRemaining--;
                     const timerDisplay = document.getElementById(`timer-${uniqueId}`);
-                    if (timerDisplay) {
+                    if(timerDisplay) {
                         timerDisplay.textContent = formatTimer(Math.max(0, localRemaining));
                     }
-                    
-                    if (localRemaining <= 0) {
+
+                    if (localRemaining < 0) { 
                         clearInterval(timers[uniqueId]);
-                        delete timers[uniqueId];
+                        delete timers[uniqueId]; 
                         const state = productionState[uniqueId];
-                        if (state && state.status !== 'action-required' && state.timerStartTime) {
+                        if (state && state.timerStartTime) { 
                             const startTime = state.timerStartTime.toDate().getTime();
                             const completionTime = new Date(startTime + (totalDurationSeconds * 1000));
-                             productionStateCollection.doc(uniqueId).update({ 
-                                 status: 'action-required', 
-                                 completionTime: completionTime 
-                             });
-                             playNotificationSound();
+                            productionStateCollection.doc(uniqueId).update({ 
+                                status: 'action-required', 
+                                completionTime: completionTime 
+                            });
+                            playNotificationSound();
                         }
                     }
-                    localRemaining--;
                 }, 1000);
             }
 
