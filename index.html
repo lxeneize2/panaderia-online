@@ -348,11 +348,9 @@
             }, error => { console.error("Error fetching orders:", error); loading.classList.add('hidden'); });
             
             productionStateCollection.onSnapshot(snapshot => {
-                const newState = {};
                 snapshot.docs.forEach(doc => {
-                    newState[doc.id] = doc.data();
+                    productionState[doc.id] = doc.data();
                 });
-                productionState = newState;
                 stateLoaded = true; 
                 checkCoreDataLoaded();
                 
@@ -821,17 +819,6 @@
                 });
 
                 productionState = newProductionState;
-                
-                productionStateCollection.get().then(snapshot => {
-                    snapshot.docs.forEach(doc => {
-                        if (productionState[doc.id]) {
-                            productionState[doc.id] = doc.data();
-                        } else {
-                            doc.ref.delete();
-                        }
-                    });
-                    renderProductionBoard();
-                });
             }
 
             function renderProductionBoard() {
@@ -850,7 +837,7 @@
                             for (let i = 0; i < item.quantity; i++) {
                                 const uniqueId = `${order.id}-item-${itemCounter}`;
                                 if (!productionState[uniqueId]) {
-                                     productionState[uniqueId] = { currentStepIndex: 0, status: 'pending', timerId: null, remainingSeconds: 0, completionTime: null };
+                                     productionState[uniqueId] = { currentStepIndex: 0, status: 'pending', timerStartTime: null, completionTime: null };
                                 }
                                 itemsHtml += createItemCard(recipe.name, uniqueId); 
                                 itemCounter++;
@@ -897,7 +884,7 @@
                              </div>`;
                  }
                  if (!state) {
-                       productionState[uniqueId] = { currentStepIndex: 0, status: 'pending', timerId: null, remainingSeconds: 0, completionTime: null };
+                       productionState[uniqueId] = { currentStepIndex: 0, status: 'pending', timerStartTime: null, completionTime: null };
                        state = productionState[uniqueId]; 
                  }
 
@@ -963,7 +950,7 @@
                                 statusClass = 'item-action-required';
                                 const finishedTime = state.completionTime.toDate().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
                                 completionTimeHtml = finishedTime ? `<span class="completion-time block text-center text-blue-600 text-xs">Finalizó: ${finishedTime}</span>` : '';
-                                timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00:00</span>${completionTimeHtml}</div>`;
+                                timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">${formatTimer(0)}</span>${completionTimeHtml}</div>`;
                                 actionButtonHtml = `<button class="btn btn-blue btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
                             }
                             break;
@@ -971,7 +958,7 @@
                             statusClass = 'item-action-required';
                             const finishedTime = state.completionTime ? state.completionTime.toDate().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : 'Ahora';
                             completionTimeHtml = finishedTime ? `<span class="completion-time block text-center text-blue-600 text-xs">Finalizó: ${finishedTime}</span>` : '';
-                            timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00:00</span>${completionTimeHtml}</div>`;
+                            timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">${formatTimer(0)}</span>${completionTimeHtml}</div>`;
                             actionButtonHtml = `<button class="btn btn-blue btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
                             break;
                     }
