@@ -8,22 +8,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Scripts de Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-storage-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #FDFBF8; }
         .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); padding: 1.5rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; }
         .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; transition: all 0.2s ease-in-out; cursor: pointer; text-align: center; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .btn-primary { background-color: #6D4C41; color: white; }
-        .btn-primary:hover { background-color: #4E342E; }
+        .btn-primary:hover:not(:disabled) { background-color: #4E342E; }
         .btn-secondary { background-color: #A1887F; color: white; }
-        .btn-secondary:hover { background-color: #8D6E63; }
+        .btn-secondary:hover:not(:disabled) { background-color: #8D6E63; }
         .btn-danger { background-color: #E57373; color: white; }
-        .btn-danger:hover { background-color: #D32F2F; }
+        .btn-danger:hover:not(:disabled) { background-color: #D32F2F; }
         input, select, textarea { border-radius: 0.5rem; border: 1px solid #D1C4E9; padding: 0.5rem; width: 100%; }
         input[type="radio"] { width: auto; }
         input:focus, select:focus, textarea:focus { outline: none; border-color: #6D4C41; box-shadow: 0 0 0 2px #D1C4E9; }
@@ -36,44 +36,66 @@
         .nav-btn { color: #4E342E; font-weight: 500; padding: 0.5rem 1rem; border-radius: 0.5rem; }
         .nav-btn.active { background-color: #D7CCC8; }
         .nav-btn:hover { background-color: #EFEBE9; }
-        
         .wood-texture {
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><g fill="%236D4C41" fill-opacity="0.1"><path d="M0 0h40v40H0zM40 40h40v40H40z"/></g></svg>');
             background-color: #A1887F;
         }
-        
         .fire-texture {
             background-color: #ff8c00;
             background-image: linear-gradient(45deg, #ffA500 25%, transparent 25%), linear-gradient(-45deg, #ffA500 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ffA500 75%), linear-gradient(-45deg, transparent 75%, #ffA500 75%);
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
-
-        .material-name-cell {
-            word-break: break-word;
+        .material-name-cell { word-break: break-word; }
+        .actions-cell .btn { width: 100%; }
+        .order-block { 
+            background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); 
+            padding: 1rem; transition: background-color 0.3s ease; flex-grow: 1; flex-shrink: 1; min-width: 300px; 
         }
-        .actions-cell .btn {
-            width: 100%;
+        .order-block-completed { background-color: #D1FAE5; border: 1px solid #10B981; } 
+        .order-header { border-bottom: 1px solid #E5E7EB; padding-bottom: 0.75rem; margin-bottom: 1rem; }
+         .order-block-completed .order-header { border-color: #A7F3D0; }
+        .item-card { 
+            border: 1px solid #E5E7EB; border-radius: 0.5rem; padding: 1rem; background-color: white; 
+            transition: all 0.3s ease; display: flex; flex-direction: column; justify-content: space-between;
+            min-height: 180px; min-width: 200px; 
         }
+        .item-card.item-pending { border-left: 5px solid #D1D5DB; } 
+        .item-card.item-in-progress { border-left: 5px solid #FBBF24; } 
+        .item-card.item-action-required { border-left: 5px solid #60A5FA; animation: pulse-blue-border 2s infinite; } 
+        .item-card.item-completed { border-left: 5px solid #34D399; background-color: #ECFDF5; } 
+         @keyframes pulse-blue-border { 0%, 100% { border-left-color: #60A5FA; } 50% { border-left-color: #93C5FD; } }
+        .btn-action { padding: 0.5rem 1rem; width: auto; margin-top: 0.5rem; }
+         .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+        .btn:disabled { background-color: #D1D5DB !important; color: #6B7280 !important; cursor: not-allowed; opacity: 0.7; }
+        .btn-gray { background-color: #E5E7EB; color: #374151; }
+        .btn-green { background-color: #10B981; color: white; }
+        .btn-yellow { background-color: #F59E0B; color: white; }
+        .btn-blue { background-color: #3B82F6; color: white; }
+        .btn-red { background-color: #EF4444; color: white; }
+        .timer-section { display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem; }
+        .timer-display { font-size: 1.5rem; font-weight: 500; font-family: monospace; color: #CA8A04; } 
+        .completion-time { font-size: 0.75rem; color: #6B7280; margin-top: 0.25rem; } 
+        .items-grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+        .recipe-step-input-group { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+        .recipe-step-input-group input { flex-grow: 1; }
+        .recipe-step-input-group input[type="number"] { flex-grow: 0; width: 80px; }
         .hour-btn {
-            border: 1px solid #D1C4E9;
-            background-color: #FAFAFA;
-            color: #6D4C41;
-            transition: all 0.2s ease-in-out;
-            padding: 0.5rem;
+            border: 1px solid #D1C4E9; background-color: #FAFAFA; color: #6D4C41;
+            transition: all 0.2s ease-in-out; padding: 0.5rem;
         }
-        .hour-btn:hover {
-            background-color: #EFEBE9;
+        .hour-btn:hover { background-color: #EFEBE9; }
+        .hour-btn.hour-selected { background-color: #6D4C41; color: white; border-color: #6D4C41; }
+        .tab-button {
+            padding: 0.5rem 1rem; border-radius: 0.5rem 0.5rem 0 0; border: 1px solid transparent; border-bottom: none; cursor: pointer; background-color: #EFEBE9; color: #795548; margin-right: 0.25rem;
         }
-        .hour-btn.hour-selected {
-            background-color: #6D4C41;
-            color: white;
-            border-color: #6D4C41;
-        }
+        .tab-button.active { background-color: white; border-color: #D1C4E9; color: #4E342E; font-weight: 600; }
+        .tab-content { border: 1px solid #D1C4E9; border-radius: 0 0.5rem 0.5rem 0.5rem; padding: 1rem; background-color: white; }
+        .tab-content.hidden { display: none; }
     </style>
 </head>
 <body>
-    <div id="loading" class="loading-overlay">
+    <div id="loading" class="loading-overlay hidden"> 
         <svg class="animate-spin h-8 w-8 text-stone-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
     </div>
 
@@ -96,6 +118,7 @@
             <nav class="card !overflow-visible flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div class="flex flex-wrap items-center justify-center gap-2">
                     <button class="nav-btn active" data-section="pedidos">Pedidos</button>
+                    <button class="nav-btn" data-section="produccion">Producción</button> 
                     <button class="nav-btn" data-section="materiales">Materiales</button>
                     <button class="nav-btn" data-section="recetas">Recetas</button>
                     <button class="nav-btn" data-section="historial">Historial</button>
@@ -119,6 +142,13 @@
                         </div>
                     </div>
                 </section>
+
+                <section id="section-produccion" class="app-section hidden">
+                     <h1 class="text-3xl font-bold text-stone-800 mb-6">Producción</h1>
+                     <div id="production-board" class="flex flex-wrap gap-6 items-start"> 
+                     </div>
+                </section>
+
                 <section id="section-materiales" class="app-section hidden">
                      <div class="card !overflow-visible"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-stone-700">Materiales</h2><button id="add-material-btn" class="btn btn-secondary">Nuevo Material</button></div><div class="overflow-x-auto"><table class="w-full text-sm text-left text-stone-500"><thead class="text-xs text-stone-700 uppercase bg-stone-50"><tr><th scope="col" class="px-6 py-3">Nombre</th><th scope="col" class="px-6 py-3">$/gr</th><th scope="col" class="px-6 py-3 text-right">Acciones</th></tr></thead><tbody id="materials-table"></tbody></table></div></div>
                 </section>
@@ -126,7 +156,7 @@
                     <div class="card !overflow-visible"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-stone-700">Recetas</h2><button id="add-recipe-btn" class="btn btn-secondary">Nueva Receta</button></div><div id="recipes-list" class="space-y-4"></div></div>
                 </section>
                 <section id="section-historial" class="app-section hidden">
-                    <div class="card !overflow-visible">
+                     <div class="card !overflow-visible">
                         <h2 class="text-2xl font-bold text-stone-700 mb-4">Historial de Ventas</h2>
                         <div id="history-content" class="max-h-[70vh] overflow-y-auto"></div>
                     </div>
@@ -135,35 +165,52 @@
         </div>
     </div>
     
-    <!-- Modals -->
     <div id="material-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 id="material-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3><form id="material-form"><div class="space-y-4"><div><label for="material-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="material-name" required></div><div><label for="material-weight" class="block text-sm font-medium text-stone-600 mb-1">Peso (gr)</label><input type="number" id="material-weight" required></div><div><label for="material-price" class="block text-sm font-medium text-stone-600 mb-1">Precio ($)</label><input type="number" step="0.01" id="material-price" required></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
     
     <div id="recipe-modal" class="modal-container hidden">
         <div class="modal-backdrop"></div>
         <div class="modal-content">
             <h3 id="recipe-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3>
+             <div class="mb-4 border-b border-gray-200">
+                <nav class="-mb-px flex space-x-1" aria-label="Tabs">
+                    <button type="button" class="tab-button active" data-tab="details">Detalles</button>
+                    <button type="button" class="tab-button" data-tab="steps">Pasos de Producción</button>
+                </nav>
+            </div>
+
             <form id="recipe-form">
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div><label for="recipe-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="recipe-name" required></div>
-                        <div><label for="recipe-sale-price" class="block text-sm font-medium text-stone-600 mb-1">Precio Venta ($)</label><input type="number" step="0.01" id="recipe-sale-price" required></div>
-                    </div>
-                    <div><label for="recipe-cooking-time" class="block text-sm font-medium text-stone-600 mb-1">Tiempo Cocción (min)</label><input type="number" id="recipe-cooking-time"></div>
-                    <div><label for="recipe-description" class="block text-sm font-medium text-stone-600 mb-1">Descripción</label><textarea id="recipe-description" rows="3"></textarea></div>
-                    <div>
-                        <label for="recipe-image-urls" class="block text-sm font-medium text-stone-600 mb-1">URLs de Imágenes</label>
-                        <textarea id="recipe-image-urls" rows="4" placeholder="Pega cada URL de imagen en una nueva línea..."></textarea>
-                    </div>
-                    <div class="relative">
-                        <label for="ingredient-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Material</label>
-                        <input type="text" id="ingredient-search">
-                        <div id="ingredient-search-results" class="absolute bg-white border z-10 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div>
-                    </div>
-                    <div>
-                        <h4 class="text-md font-medium text-stone-600 mb-2">Ingredientes</h4>
-                        <div id="ingredients-container" class="space-y-2 border p-2 rounded-md min-h-[50px]"></div>
+                <div class="tab-content" id="tab-content-details">
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div><label for="recipe-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="recipe-name" required></div>
+                            <div><label for="recipe-sale-price" class="block text-sm font-medium text-stone-600 mb-1">Precio Venta ($)</label><input type="number" step="0.01" id="recipe-sale-price" required></div>
+                        </div>
+                        <div><label for="recipe-cooking-time" class="block text-sm font-medium text-stone-600 mb-1">Tiempo Cocción (min)</label><input type="number" id="recipe-cooking-time"></div>
+                        <div><label for="recipe-description" class="block text-sm font-medium text-stone-600 mb-1">Descripción</label><textarea id="recipe-description" rows="2"></textarea></div>
+                        <div>
+                            <label for="recipe-image-urls" class="block text-sm font-medium text-stone-600 mb-1">URLs de Imágenes</label>
+                            <textarea id="recipe-image-urls" rows="3" placeholder="Pega cada URL de imagen en una nueva línea..."></textarea>
+                        </div>
+                        <div class="relative">
+                            <label for="ingredient-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Material</label>
+                            <input type="text" id="ingredient-search">
+                            <div id="ingredient-search-results" class="absolute bg-white border z-10 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div>
+                        </div>
+                        <div>
+                            <h4 class="text-md font-medium text-stone-600 mb-2">Ingredientes</h4>
+                            <div id="ingredients-container" class="space-y-2 border p-2 rounded-md min-h-[50px]"></div>
+                        </div>
                     </div>
                 </div>
+
+                <div class="tab-content hidden" id="tab-content-steps">
+                     <h4 class="text-md font-medium text-stone-600 mb-2">Pasos de Producción</h4>
+                     <p class="text-xs text-stone-500 mb-3">Define los pasos para esta receta. Duración 0 significa paso manual.</p>
+                     <div id="production-steps-container" class="space-y-2">
+                     </div>
+                     <button type="button" id="add-production-step-btn" class="btn btn-secondary btn-sm mt-2 w-auto">Añadir Paso</button>
+                </div>
+                
                 <div class="flex justify-end gap-4 mt-6">
                     <button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
@@ -172,7 +219,7 @@
         </div>
     </div>
 
-    <div id="new-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Crear Pedido</h3><form id="new-order-form"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="customer-name" required></div><div><label for="customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="customer-phone"></div></div><div><label for="delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="delivery-date"></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Horarios de Entrega</label><div id="new-order-hours-grid" class="grid grid-cols-6 gap-2"></div></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label><div class="flex items-center gap-x-4"><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin asignar" class="mr-1" checked>Sin asignar</label><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin cortar" class="mr-1">Sin cortar</label><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Cortado" class="mr-1">Cortado</label></div></div><div class="relative"><label for="order-recipe-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Producto</label><input type="text" id="order-recipe-search"><div id="order-recipe-search-results" class="absolute bg-white border z-20 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div></div><div><h4 class="text-md font-medium text-stone-600 mb-2">Productos</h4><div id="order-selected-recipes" class="space-y-2 border p-3 rounded-md min-h-[60px] max-h-48 overflow-y-auto"></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Crear</button></div></form></div></div>
+     <div id="new-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Crear Pedido</h3><form id="new-order-form"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="customer-name" required></div><div><label for="customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="customer-phone"></div></div><div><label for="delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="delivery-date"></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Horarios de Entrega</label><div id="new-order-hours-grid" class="grid grid-cols-6 gap-2"></div></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label><div class="flex items-center gap-x-4"><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin asignar" class="mr-1" checked>Sin asignar</label><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin cortar" class="mr-1">Sin cortar</label><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Cortado" class="mr-1">Cortado</label></div></div><div class="relative"><label for="order-recipe-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Producto</label><input type="text" id="order-recipe-search"><div id="order-recipe-search-results" class="absolute bg-white border z-20 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div></div><div><h4 class="text-md font-medium text-stone-600 mb-2">Productos</h4><div id="order-selected-recipes" class="space-y-2 border p-3 rounded-md min-h-[60px] max-h-48 overflow-y-auto"></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Crear</button></div></form></div></div>
     <div id="order-details-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Materiales del Pedido</h3><div id="order-details-content"></div><div class="flex justify-end mt-6"><button type="button" class="btn-cancel-modal btn btn-primary">Cerrar</button></div></div></div>
     <div id="edit-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Editar Pedido</h3><form id="edit-order-form"><input type="hidden" id="edit-order-id"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="edit-customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="edit-customer-name" required></div><div><label for="edit-customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="edit-customer-phone"></div></div><div><label for="edit-delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="edit-delivery-date"></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Horarios de Entrega</label><div id="edit-order-hours-grid" class="grid grid-cols-6 gap-2"></div></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label><div class="flex items-center gap-x-4"><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Sin asignar" class="mr-1">Sin asignar</label><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Sin cortar" class="mr-1">Sin cortar</label><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Cortado" class="mr-1">Cortado</label></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
     
@@ -202,7 +249,7 @@
             if (user && !user.isAnonymous) {
                 loginContainer.classList.add('hidden');
                 adminPanel.classList.remove('hidden');
-                loading.classList.remove('hidden');
+                loading.classList.remove('hidden'); 
                 setupRealtimeListeners(user);
             } else {
                 loginContainer.classList.remove('hidden');
@@ -213,6 +260,9 @@
 
         loginForm.addEventListener('submit', e => { e.preventDefault(); loginError.classList.add('hidden'); const email = loginForm['email-address'].value; const password = loginForm['password'].value; auth.signInWithEmailAndPassword(email, password).catch(error => { console.error("Error de login:", error); loginError.textContent = "Email o contraseña incorrectos."; loginError.classList.remove('hidden'); }); });
         logoutBtn.addEventListener('click', () => { auth.signOut(); });
+
+        let productionState = {}; 
+        let timers = {}; 
 
         function setupRealtimeListeners(user) {
             if (!user) return;
@@ -233,6 +283,7 @@
             const orderDetailsModal = document.getElementById('order-details-modal');
             const editOrderModal = document.getElementById('edit-order-modal');
             const historyContent = document.getElementById('history-content');
+            const productionBoard = document.getElementById('production-board'); 
 
             const materialsCollection = db.collection('materials');
             const recipesCollection = db.collection('recipes');
@@ -246,13 +297,48 @@
                 sections.forEach(section => section.classList.toggle('hidden', section.id !== `section-${sectionId}`));
                 navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.section === sectionId));
                 if(sectionId === 'historial') renderHistory();
+                if (sectionId === 'produccion') {
+                    initializeProductionState(); 
+                    renderProductionBoard();
+                }
             }
             navButtons.forEach(button => button.addEventListener('click', () => showSection(button.dataset.section)));
+            
+            loading.classList.remove('hidden');
 
-            materialsCollection.orderBy("name").onSnapshot(snapshot => { materials = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAll(); });
-            recipesCollection.onSnapshot(snapshot => { recipes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAll(); });
-            ordersCollection.orderBy("createdAt", "desc").onSnapshot(snapshot => { orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAll(); });
-            loading.classList.add('hidden');
+            let materialsLoaded = false, recipesLoaded = false, ordersLoaded = false;
+            
+            const checkAllLoaded = () => {
+                if (materialsLoaded && recipesLoaded && ordersLoaded) {
+                    renderAll();
+                    initializeProductionState();
+                    renderProductionBoard(); 
+                    loading.classList.add('hidden'); 
+                }
+            };
+
+            materialsCollection.orderBy("name").onSnapshot(snapshot => { 
+                materials = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
+                materialsLoaded = true;
+                checkAllLoaded(); 
+            }, error => { console.error("Error fetching materials:", error); loading.classList.add('hidden'); });
+
+            recipesCollection.onSnapshot(snapshot => { 
+                recipes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
+                recipesLoaded = true;
+                checkAllLoaded(); 
+            }, error => { console.error("Error fetching recipes:", error); loading.classList.add('hidden'); });
+
+            ordersCollection.orderBy("deliveryDate").onSnapshot(snapshot => { 
+                 orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
+                 orders.sort((a, b) => {
+                     const dateA = a.deliveryDate; const dateB = b.deliveryDate;
+                     if (!dateA && dateB) return -1; if (dateA && !dateB) return 1; if (!dateA && !dateB) return 0; 
+                     return a.deliveryDate.localeCompare(b.deliveryDate); 
+                 });
+                 ordersLoaded = true;
+                 checkAllLoaded(); 
+            }, error => { console.error("Error fetching orders:", error); loading.classList.add('hidden'); });
 
             const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount || 0);
             const formatMinutes = (mins) => { if (!mins || mins < 1) return '0 min'; const h = Math.floor(mins / 60); const m = mins % 60; return `${h > 0 ? h + 'h ' : ''}${m}min`; };
@@ -266,9 +352,20 @@
                 return formatted.charAt(0).toUpperCase() + formatted.slice(1);
             };
 
-            const renderAll = () => { renderMaterialsTable(); renderRecipesList(); renderOrders(); renderGlobalStats(); renderAgenda(); };
-            const renderMaterialsTable = () => {
-                materialsTable.innerHTML = ''; if (materials.length === 0) { materialsTable.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-stone-500">Aún no hay materiales.</td></tr>`; return; }
+            const renderAll = () => { 
+                renderMaterialsTable(); 
+                renderRecipesList(); 
+                renderOrders(); 
+                renderGlobalStats(); 
+                renderAgenda(); 
+                 const productionSection = document.getElementById('section-produccion');
+                 if (productionSection && !productionSection.classList.contains('hidden')) {
+                     initializeProductionState(); 
+                    renderProductionBoard();
+                 }
+            };
+            const renderMaterialsTable = () => { 
+                 materialsTable.innerHTML = ''; if (materials.length === 0) { materialsTable.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-stone-500">Aún no hay materiales.</td></tr>`; return; }
                 materials.forEach(material => {
                     const pricePerGram = (material.price && material.weight) ? material.price / material.weight : 0;
                     const row = document.createElement('tr');
@@ -277,9 +374,11 @@
                     materialsTable.appendChild(row);
                 });
             };
-            const renderRecipesList = () => { recipesList.innerHTML = ''; if (recipes.length === 0) { recipesList.innerHTML = `<p class="text-center p-4 text-stone-500">Aún no hay recetas.</p>`; return; } recipes.forEach(recipe => { const recipeCost = calculateRecipeCost(recipe.id); const recipeCard = document.createElement('div'); recipeCard.className = `p-4 border rounded-lg ${recipe.isAffected ? 'recipe-affected' : ''}`; recipeCard.innerHTML = `<div class="flex justify-between items-start"><div><h4 class="font-bold text-stone-800">${recipe.name}</h4><p class="text-sm text-stone-600">Costo: ${formatCurrency(recipeCost)} | Venta: ${formatCurrency(recipe.salePrice)}</p><p class="text-sm text-blue-600">Cocción: ${formatMinutes(recipe.cookingTime)}</p>${recipe.isAffected ? '<p class="text-xs text-red-600">Un material fue eliminado.</p>' : ''}</div><div class="flex gap-2"><button class="btn text-xs btn-secondary" data-action="edit-recipe" data-id="${recipe.id}">Editar</button><button class="btn text-xs btn-danger" data-action="delete-recipe" data-id="${recipe.id}">Eliminar</button></div></div>`; recipesList.appendChild(recipeCard); }); };
-            const renderOrders = () => {
-                ordersContainer.innerHTML = ''; if (orders.length === 0) { ordersContainer.innerHTML = `<p class="text-center text-stone-500">Aún no hay pedidos activos.</p>`; return; }
+            const renderRecipesList = () => { 
+                 recipesList.innerHTML = ''; if (recipes.length === 0) { recipesList.innerHTML = `<p class="text-center p-4 text-stone-500">Aún no hay recetas.</p>`; return; } recipes.forEach(recipe => { const recipeCost = calculateRecipeCost(recipe.id); const recipeCard = document.createElement('div'); recipeCard.className = `p-4 border rounded-lg ${recipe.isAffected ? 'recipe-affected' : ''}`; recipeCard.innerHTML = `<div class="flex justify-between items-start"><div><h4 class="font-bold text-stone-800">${recipe.name}</h4><p class="text-sm text-stone-600">Costo: ${formatCurrency(recipeCost)} | Venta: ${formatCurrency(recipe.salePrice)}</p><p class="text-sm text-blue-600">Cocción: ${formatMinutes(recipe.cookingTime)}</p>${recipe.isAffected ? '<p class="text-xs text-red-600">Un material fue eliminado.</p>' : ''}</div><div class="flex gap-2"><button class="btn text-xs btn-secondary" data-action="edit-recipe" data-id="${recipe.id}">Editar</button><button class="btn text-xs btn-danger" data-action="delete-recipe" data-id="${recipe.id}">Eliminar</button></div></div>`; recipesList.appendChild(recipeCard); });
+            };
+            const renderOrders = () => { 
+                 ordersContainer.innerHTML = ''; if (orders.length === 0) { ordersContainer.innerHTML = `<p class="text-center text-stone-500">Aún no hay pedidos activos.</p>`; return; }
                 orders.forEach(order => {
                     const orderCard = document.createElement('div'); orderCard.className = 'card !p-0 !mb-4 order-card'; orderCard.id = `order-${order.id}`; let totalSalePrice = 0; let totalCookingTime = 0;
                     const itemsHtml = (order.items || []).map(item => { const recipe = recipes.find(r => r.id === item.recipeId); const salePrice = (recipe ? recipe.salePrice : 0) * item.quantity; totalSalePrice += salePrice; totalCookingTime += (recipe ? recipe.cookingTime || 0 : 0) * item.quantity; return `<li class="flex justify-between items-center py-1"><span class="text-stone-700">${item.quantity} x ${recipe ? recipe.name : 'Receta eliminada'}</span><span class="text-sm text-stone-800 font-medium">${formatCurrency(salePrice)}</span></li>`; }).join('');
@@ -288,15 +387,10 @@
                     
                     let timeSlotHtml = '';
                     if (order.deliveryHours && order.deliveryHours.length > 0) {
-                        const sortedHours = order.deliveryHours.sort((a, b) => a - b);
+                        const sortedHours = [...order.deliveryHours].sort((a, b) => a - b); 
                         const minHour = sortedHours[0];
                         const maxHour = sortedHours[sortedHours.length - 1];
-                        let timeText = '';
-                        if (minHour === maxHour) {
-                            timeText = `a las ${minHour}hs`;
-                        } else {
-                            timeText = `de ${minHour}hs a ${maxHour}hs`;
-                        }
+                        let timeText = (minHour === maxHour) ? `a las ${minHour}hs` : `de ${minHour}hs a ${maxHour}hs`;
                         timeSlotHtml = `<p class="text-sm text-cyan-800 bg-cyan-100 px-2 py-1 rounded-full">${timeText}</p>`;
                     }
 
@@ -305,21 +399,15 @@
                     ordersContainer.appendChild(orderCard);
                 });
             };
-            const renderGlobalStats = () => {
-                const totalIngredients = {}; 
-                let totalCost = 0; 
-                let totalCookTime = 0;
-                let totalRevenue = 0;
-
+            const renderGlobalStats = () => { 
+                 const totalIngredients = {}; let totalCost = 0; let totalCookTime = 0; let totalRevenue = 0;
                 orders.forEach(order => { 
                     (order.items || []).forEach(item => { 
                         const recipe = recipes.find(r => r.id === item.recipeId); 
                         if (!recipe) return; 
-
                         totalRevenue += (recipe.salePrice || 0) * item.quantity;
                         totalCost += calculateRecipeCost(recipe.id) * item.quantity; 
                         totalCookTime += (recipe.cookingTime || 0) * item.quantity; 
-
                         (recipe.ingredients || []).forEach(ing => { 
                             const material = materials.find(m => m.id === ing.materialId); 
                             if (!material) return; 
@@ -328,87 +416,100 @@
                         }); 
                     }); 
                 });
-
                 shoppingListEl.innerHTML = Object.keys(totalIngredients).length === 0 ? `<li>Crea un pedido para ver los materiales.</li>` : Object.keys(totalIngredients).sort().map(name => `<li class="flex justify-between"><span>${name}</span> <strong>${totalIngredients[name].toFixed(0)} gr</strong></li>`).join('');
                 totalProductionCostEl.textContent = formatCurrency(totalCost);
                 totalRevenueEl.textContent = formatCurrency(totalRevenue);
                 totalCookingTimeEl.textContent = formatMinutes(totalCookTime);
             };
-            const renderAgenda = () => {
+            const renderAgenda = () => { 
                 const agendaContainer = document.getElementById('agenda-container');
                 if (!agendaContainer) return;
-
-                const weekDates = [];
-                const dayNames = [];
-                const dayInitials = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                for (let i = 0; i < 7; i++) {
-                    const day = new Date(today);
-                    day.setDate(today.getDate() + i);
-                    weekDates.push(day);
-                    dayNames.push(dayInitials[day.getDay()]);
-                }
-
+                const weekDates = []; const dayNames = []; const dayInitials = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+                const today = new Date(); today.setHours(0, 0, 0, 0);
+                for (let i = 0; i < 7; i++) { const day = new Date(today); day.setDate(today.getDate() + i); weekDates.push(day); dayNames.push(dayInitials[day.getDay()]); }
                 const toYYYYMMDD = (date) => date.toISOString().split('T')[0];
                 const weekDateStrings = weekDates.map(toYYYYMMDD);
-                
                 const agendaData = {};
-                const futureOrders = orders.filter(order => {
-                    if (!order.deliveryDate) return false;
-                    const orderDate = new Date(order.deliveryDate + 'T00:00:00');
-                    return orderDate >= today;
-                });
-                
+                const futureOrders = orders.filter(order => { if (!order.deliveryDate) return false; const orderDate = new Date(order.deliveryDate + 'T00:00:00'); return orderDate >= today; });
                 const ordersForAgenda = futureOrders.filter(order => weekDateStrings.includes(order.deliveryDate));
-                
-                ordersForAgenda.forEach(order => {
-                    const date = order.deliveryDate;
-                    if (!agendaData[date]) agendaData[date] = {};
-                    (order.items || []).forEach(item => {
-                        if (!agendaData[date][item.recipeId]) agendaData[date][item.recipeId] = 0;
-                        agendaData[date][item.recipeId] += item.quantity;
-                    });
-                });
-
-                const activeRecipeIds = new Set();
-                ordersForAgenda.forEach(o => o.items.forEach(i => activeRecipeIds.add(i.recipeId)));
+                ordersForAgenda.forEach(order => { const date = order.deliveryDate; if (!agendaData[date]) agendaData[date] = {}; (order.items || []).forEach(item => { if (!agendaData[date][item.recipeId]) agendaData[date][item.recipeId] = 0; agendaData[date][item.recipeId] += item.quantity; }); });
+                const activeRecipeIds = new Set(); ordersForAgenda.forEach(o => o.items.forEach(i => activeRecipeIds.add(i.recipeId)));
                 const activeRecipes = recipes.filter(r => activeRecipeIds.has(r.id)).sort((a, b) => a.name.localeCompare(b.name));
-
-                if (activeRecipes.length === 0) {
-                    agendaContainer.innerHTML = `<h3 class="text-xl font-bold text-stone-700 mb-4">Próximos 7 Días</h3><p class="text-stone-500 text-center">No hay entregas programadas.</p>`;
-                    return;
-                }
-                
+                if (activeRecipes.length === 0) { agendaContainer.innerHTML = `<h3 class="text-xl font-bold text-stone-700 mb-4">Próximos 7 Días</h3><p class="text-stone-500 text-center">No hay entregas programadas.</p>`; return; }
                 const headerHtml = `<tr><th class="px-4 py-2 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Receta</th>${dayNames.map(day => `<th class="px-2 py-2 text-center text-xs font-medium text-stone-500 uppercase tracking-wider">${day}</th>`).join('')}</tr>`;
-
-                const bodyHtml = activeRecipes.map(recipe => {
-                    const rowCells = weekDates.map(date => {
-                        const dateStr = toYYYYMMDD(date);
-                        const quantity = agendaData[dateStr]?.[recipe.id] || 0;
-                        return `<td class="px-2 py-2 text-center whitespace-nowrap text-sm font-medium ${quantity > 0 ? 'text-stone-900 bg-emerald-50' : 'text-stone-400'}">${quantity > 0 ? quantity : '-'}</td>`;
-                    }).join('');
-
-                    return `<tr class="border-t border-stone-200"><td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-stone-700">${recipe.name}</td>${rowCells}</tr>`;
-                }).join('');
-
+                const bodyHtml = activeRecipes.map(recipe => { const rowCells = weekDates.map(date => { const dateStr = toYYYYMMDD(date); const quantity = agendaData[dateStr]?.[recipe.id] || 0; return `<td class="px-2 py-2 text-center whitespace-nowrap text-sm font-medium ${quantity > 0 ? 'text-stone-900 bg-emerald-50' : 'text-stone-400'}">${quantity > 0 ? quantity : '-'}</td>`; }).join(''); return `<tr class="border-t border-stone-200"><td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-stone-700">${recipe.name}</td>${rowCells}</tr>`; }).join('');
                 agendaContainer.innerHTML = `<h3 class="text-xl font-bold text-stone-700 mb-4">Próximos 7 Días</h3><div class="overflow-x-auto"><table class="min-w-full divide-y divide-stone-200"><thead class="bg-stone-50">${headerHtml}</thead><tbody class="bg-white divide-y divide-stone-200">${bodyHtml}</tbody></table></div>`;
             };
-            const calculateRecipeCost = (recipeId) => { const recipe = recipes.find(r => r.id === recipeId); if (!recipe || !recipe.ingredients) return 0; return recipe.ingredients.reduce((total, ingredient) => { const material = materials.find(m => m.id === ingredient.materialId); if (!material) return total; const pricePerGram = (material.price / material.weight) || 0; return total + (pricePerGram * ingredient.grams); }, 0); };
+            const calculateRecipeCost = (recipeId) => { 
+                const recipe = recipes.find(r => r.id === recipeId); if (!recipe || !recipe.ingredients) return 0; return recipe.ingredients.reduce((total, ingredient) => { const material = materials.find(m => m.id === ingredient.materialId); if (!material) return total; const pricePerGram = (material.price && material.weight > 0) ? material.price / material.weight : 0; return total + (pricePerGram * ingredient.grams); }, 0);
+             };
+            
             function openModal(modalEl) { modalEl.classList.remove('hidden'); }
             function closeModal(modalEl) { modalEl.classList.add('hidden'); }
-            document.querySelectorAll('.btn-cancel-modal, .modal-backdrop').forEach(el => { el.addEventListener('click', () => { document.querySelectorAll('.modal-container').forEach(modal => modal.classList.add('hidden')); }); });
-            document.getElementById('add-material-btn').addEventListener('click', () => { const form = materialModal.querySelector('form'); form.reset(); materialModal.dataset.editingId = ''; materialModal.querySelector('h3').textContent = 'Nuevo Material'; openModal(materialModal); });
-            materialsTable.addEventListener('click', e => { const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; if (action === 'edit-material') { const material = materials.find(m => m.id === id); if (!material) return; const form = materialModal.querySelector('form'); form.querySelector('#material-name').value = material.name; form.querySelector('#material-weight').value = material.weight; form.querySelector('#material-price').value = material.price; materialModal.dataset.editingId = id; materialModal.querySelector('h3').textContent = 'Editar Material'; openModal(materialModal); } else if (action === 'delete-material') { if (!confirm('¿Seguro?')) return; const batch = db.batch(); recipes.forEach(recipe => { if ((recipe.ingredients || []).some(ing => ing.materialId === id)) { batch.update(recipesCollection.doc(recipe.id), { isAffected: true }); } }); batch.commit().then(() => { materialsCollection.doc(id).delete(); }); } });
-            materialModal.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); const id = materialModal.dataset.editingId; const name = e.target.querySelector('#material-name').value; const weight = parseFloat(e.target.querySelector('#material-weight').value); const price = parseFloat(e.target.querySelector('#material-price').value); const materialData = { name, weight, price }; try { if (id) { await materialsCollection.doc(id).set(materialData, { merge: true }); } else { await materialsCollection.add(materialData); } closeModal(materialModal); } catch (error) { console.error(error); } });
-            
+            document.querySelectorAll('.btn-cancel-modal, .modal-backdrop').forEach(el => { el.addEventListener('click', (e) => { 
+                const modal = e.target.closest('.modal-container');
+                if (modal) closeModal(modal);
+             }); });
+
+             document.getElementById('add-material-btn').addEventListener('click', () => { 
+                const form = materialModal.querySelector('form'); form.reset(); materialModal.dataset.editingId = ''; materialModal.querySelector('h3').textContent = 'Nuevo Material'; openModal(materialModal); 
+            });
+            materialsTable.addEventListener('click', e => { 
+                const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; if (action === 'edit-material') { const material = materials.find(m => m.id === id); if (!material) return; const form = materialModal.querySelector('form'); form.querySelector('#material-name').value = material.name; form.querySelector('#material-weight').value = material.weight; form.querySelector('#material-price').value = material.price; materialModal.dataset.editingId = id; materialModal.querySelector('h3').textContent = 'Editar Material'; openModal(materialModal); } else if (action === 'delete-material') { if (!confirm('¿Seguro?')) return; const batch = db.batch(); recipes.forEach(recipe => { if ((recipe.ingredients || []).some(ing => ing.materialId === id)) { batch.update(recipesCollection.doc(recipe.id), { isAffected: true }); } }); batch.commit().then(() => { materialsCollection.doc(id).delete(); }); } 
+            });
+            materialModal.querySelector('form').addEventListener('submit', async e => { 
+                e.preventDefault(); const id = materialModal.dataset.editingId; const name = e.target.querySelector('#material-name').value; const weight = parseFloat(e.target.querySelector('#material-weight').value); const price = parseFloat(e.target.querySelector('#material-price').value); const materialData = { name, weight, price }; try { if (id) { await materialsCollection.doc(id).set(materialData, { merge: true }); } else { await materialsCollection.add(materialData); } closeModal(materialModal); } catch (error) { console.error(error); } 
+            });
+
+             const addStepBtn = document.getElementById('add-production-step-btn');
+             const stepsContainer = document.getElementById('production-steps-container');
+             const recipeTabs = recipeModal.querySelectorAll('.tab-button');
+             const recipeTabContents = recipeModal.querySelectorAll('.tab-content');
+
+             recipeTabs.forEach(tab => {
+                 tab.addEventListener('click', () => {
+                     const targetTab = tab.dataset.tab;
+                     
+                     recipeTabs.forEach(t => t.classList.remove('active'));
+                     tab.classList.add('active');
+
+                     recipeTabContents.forEach(content => {
+                         content.classList.toggle('hidden', content.id !== `tab-content-${targetTab}`);
+                     });
+                 });
+             });
+
+
+             addStepBtn.addEventListener('click', () => addProductionStepInput());
+
+             stepsContainer.addEventListener('click', (e) => {
+                 if (e.target.classList.contains('remove-step-btn')) {
+                     e.target.closest('.recipe-step-input-group').remove();
+                 }
+             });
+
+             function addProductionStepInput(step = { name: '', duration: 0 }) {
+                 const stepDiv = document.createElement('div');
+                 stepDiv.className = 'recipe-step-input-group';
+                 stepDiv.innerHTML = `
+                     <input type="text" class="step-name" placeholder="Nombre del paso" value="${step.name || ''}" required>
+                     <input type="number" class="step-duration" placeholder="Minutos" value="${step.duration || 0}" min="0">
+                     <button type="button" class="remove-step-btn btn btn-danger btn-sm w-auto">X</button>
+                 `;
+                 stepsContainer.appendChild(stepDiv);
+             }
+
+
             document.getElementById('add-recipe-btn').addEventListener('click', () => {
                 const form = recipeModal.querySelector('form');
                 form.reset();
                 recipeModal.dataset.editingId = '';
                 recipeModal.querySelector('h3').textContent = 'Nueva Receta';
                 form.querySelector('#ingredients-container').innerHTML = '';
+                stepsContainer.innerHTML = ''; 
+                addProductionStepInput(); 
+                recipeTabs.forEach((t, i) => t.classList.toggle('active', i === 0));
+                recipeTabContents.forEach((c, i) => c.classList.toggle('hidden', i !== 0));
                 openModal(recipeModal);
             });
 
@@ -430,12 +531,22 @@
                     form.querySelector('#recipe-image-urls').value = (recipe.imageUrls || []).join('\n');
                     recipeModal.dataset.editingId = id; 
                     recipeModal.querySelector('h3').textContent = 'Editar Receta'; 
-                    const container = form.querySelector('#ingredients-container'); 
-                    container.innerHTML = ''; 
+                    
+                    const ingredientsContainer = form.querySelector('#ingredients-container'); 
+                    ingredientsContainer.innerHTML = ''; 
                     (recipe.ingredients || []).forEach(ing => { 
                         const material = materials.find(m => m.id === ing.materialId); 
-                        if (material) addIngredientToRecipeForm(material, ing.grams, container); 
+                        if (material) addIngredientToRecipeForm(material, ing.grams, ingredientsContainer); 
                     }); 
+
+                    stepsContainer.innerHTML = '';
+                    if (recipe.steps && recipe.steps.length > 0) {
+                        recipe.steps.forEach(step => addProductionStepInput(step));
+                    } else {
+                        addProductionStepInput(); 
+                    }
+                    recipeTabs.forEach((t, i) => t.classList.toggle('active', i === 0));
+                    recipeTabContents.forEach((c, i) => c.classList.toggle('hidden', i !== 0));
                     openModal(recipeModal); 
                 } else if (action === 'delete-recipe') { 
                     if (!confirm('¿Seguro?')) return; 
@@ -443,11 +554,8 @@
                     orders.forEach(order => { 
                         const newItems = (order.items || []).filter(item => item.recipeId !== id); 
                         if (newItems.length < (order.items || []).length) { 
-                            if (newItems.length === 0) { 
-                                batch.delete(ordersCollection.doc(order.id)); 
-                            } else { 
-                                batch.update(ordersCollection.doc(order.id), { items: newItems }); 
-                            } 
+                            if (newItems.length === 0) { batch.delete(ordersCollection.doc(order.id)); } 
+                            else { batch.update(ordersCollection.doc(order.id), { items: newItems }); } 
                         } 
                     }); 
                     batch.commit().then(() => { recipesCollection.doc(id).delete(); });
@@ -467,205 +575,597 @@
                 const ingredientRows = e.target.querySelectorAll('.ingredient-row');
                 const ingredients = Array.from(ingredientRows).map(row => ({ materialId: row.dataset.materialId, grams: parseFloat(row.querySelector('.ingredient-grams').value) })).filter(ing => ing.materialId && ing.grams > 0);
                 
-                if (ingredients.length === 0) {
-                    alert('Debe agregar al menos un ingrediente.');
-                    return;
-                }
+                const productionSteps = [];
+                stepsContainer.querySelectorAll('.recipe-step-input-group').forEach(stepGroup => {
+                    const stepName = stepGroup.querySelector('.step-name').value.trim();
+                    const stepDuration = parseInt(stepGroup.querySelector('.step-duration').value) || 0;
+                    if (stepName) { 
+                        productionSteps.push({ name: stepName, duration: stepDuration });
+                    }
+                });
+
+                if (ingredients.length === 0) return alert('Debe agregar al menos un ingrediente.');
+                if (productionSteps.length === 0) return alert('Debe agregar al menos un paso de producción.');
+
 
                 const recipeData = { 
-                    name, 
-                    salePrice, 
-                    cookingTime, 
-                    description, 
-                    imageUrls,
-                    ingredients, 
+                    name, salePrice, cookingTime, description, imageUrls, ingredients, 
+                    steps: productionSteps, 
                     isAffected: false 
                 };
 
                 try {
-                    if (id) {
-                        await recipesCollection.doc(id).set(recipeData, { merge: true });
-                    } else {
-                        await recipesCollection.add(recipeData);
-                    }
+                    if (id) { await recipesCollection.doc(id).set(recipeData, { merge: true }); } 
+                    else { await recipesCollection.add(recipeData); }
                     closeModal(recipeModal);
-                } catch (error) {
-                    console.error("Error saving recipe:", error);
-                    alert("Error al guardar la receta.");
-                }
+                } catch (error) { console.error("Error saving recipe:", error); alert("Error al guardar la receta."); }
             });
             
             const ingredientSearchInput = document.getElementById('ingredient-search'); 
             const ingredientSearchResults = document.getElementById('ingredient-search-results');
-            function displayIngredientResults(query = ''){ const lowerCaseQuery = query.toLowerCase(); ingredientSearchResults.innerHTML = ''; materials.filter(m => m.name.toLowerCase().includes(lowerCaseQuery)).forEach(material => { const item = document.createElement('div'); item.className = 'p-2 cursor-pointer hover:bg-stone-100'; item.textContent = material.name; item.onclick = () => { const grams = prompt(`¿Cuántos gramos de ${material.name}?`); if (grams && !isNaN(grams) && parseFloat(grams) > 0) { addIngredientToRecipeForm(material, parseFloat(grams), document.getElementById('ingredients-container')); } ingredientSearchInput.value = ''; ingredientSearchResults.innerHTML = ''; }; ingredientSearchResults.appendChild(item); }); }
+            function displayIngredientResults(query = ''){ 
+                 const lowerCaseQuery = query.toLowerCase(); ingredientSearchResults.innerHTML = ''; materials.filter(m => m.name.toLowerCase().includes(lowerCaseQuery)).forEach(material => { const item = document.createElement('div'); item.className = 'p-2 cursor-pointer hover:bg-stone-100'; item.textContent = material.name; item.onclick = () => { const grams = prompt(`¿Cuántos gramos de ${material.name}?`); if (grams && !isNaN(grams) && parseFloat(grams) > 0) { addIngredientToRecipeForm(material, parseFloat(grams), document.getElementById('ingredients-container')); } ingredientSearchInput.value = ''; ingredientSearchResults.innerHTML = ''; }; ingredientSearchResults.appendChild(item); }); 
+             }
             ingredientSearchInput.addEventListener('keyup', e => displayIngredientResults(e.target.value));
             ingredientSearchInput.addEventListener('focus', () => displayIngredientResults(ingredientSearchInput.value));
             document.addEventListener('click', (e) => { if (!ingredientSearchInput.contains(e.target) && !ingredientSearchResults.contains(e.target)) { ingredientSearchResults.innerHTML = ''; } });
-            function addIngredientToRecipeForm(material, grams, container) { const row = document.createElement('div'); row.className = 'ingredient-row flex items-center justify-between p-2 bg-gray-50 rounded-md'; row.dataset.materialId = material.id; row.innerHTML = `<span>${material.name}</span><div class="flex items-center gap-2"><input type="number" value="${grams}" class="ingredient-grams w-24 text-right p-1 border rounded" required min="0.1" step="0.1"><span>gr</span><button type="button" class="text-red-500 font-bold">X</button></div>`; row.querySelector('button').onclick = () => row.remove(); container.appendChild(row); }
-            document.getElementById('add-order-btn').addEventListener('click', () => { newOrderModalEl.items = []; renderTempOrderItems(); newOrderModalEl.querySelector('form').reset(); openModal(newOrderModalEl); });
+            function addIngredientToRecipeForm(material, grams, container) { 
+                 const row = document.createElement('div'); row.className = 'ingredient-row flex items-center justify-between p-2 bg-gray-50 rounded-md'; row.dataset.materialId = material.id; row.innerHTML = `<span>${material.name}</span><div class="flex items-center gap-2"><input type="number" value="${grams}" class="ingredient-grams w-24 text-right p-1 border rounded" required min="0.1" step="0.1"><span>gr</span><button type="button" class="text-red-500 font-bold">X</button></div>`; row.querySelector('button').onclick = () => row.remove(); container.appendChild(row); 
+             }
+            
+            document.getElementById('add-order-btn').addEventListener('click', () => { 
+                 newOrderModalEl.items = []; renderTempOrderItems(); newOrderModalEl.querySelector('form').reset(); generateHourGrid('new-order-hours-grid'); openModal(newOrderModalEl); 
+            });
             const orderRecipeSearchInput = document.getElementById('order-recipe-search'); const orderRecipeSearchResults = document.getElementById('order-recipe-search-results');
-            function displayOrderRecipeResults(query = '') { const lowerCaseQuery = query.toLowerCase(); orderRecipeSearchResults.innerHTML = ''; const filteredRecipes = recipes.filter(r => r.name.toLowerCase().includes(lowerCaseQuery) && !newOrderModalEl.items.some(i => i.recipeId === r.id)); if (filteredRecipes.length === 0) { orderRecipeSearchResults.innerHTML = `<div class="p-2 text-stone-500">No hay más recetas.</div>`; } else { filteredRecipes.forEach(recipe => { const item = document.createElement('div'); item.className = 'p-2 cursor-pointer hover:bg-stone-100'; item.textContent = recipe.name; item.onclick = () => { newOrderModalEl.items.push({ recipeId: recipe.id, quantity: 1 }); renderTempOrderItems(); orderRecipeSearchInput.value = ''; orderRecipeSearchResults.innerHTML = ''; }; orderRecipeSearchResults.appendChild(item); }); } }
+            function displayOrderRecipeResults(query = '') { 
+                const lowerCaseQuery = query.toLowerCase(); orderRecipeSearchResults.innerHTML = ''; const filteredRecipes = recipes.filter(r => r.name.toLowerCase().includes(lowerCaseQuery) && !newOrderModalEl.items.some(i => i.recipeId === r.id)); if (filteredRecipes.length === 0) { orderRecipeSearchResults.innerHTML = `<div class="p-2 text-stone-500">No hay más recetas.</div>`; } else { filteredRecipes.forEach(recipe => { const item = document.createElement('div'); item.className = 'p-2 cursor-pointer hover:bg-stone-100'; item.textContent = recipe.name; item.onclick = () => { newOrderModalEl.items.push({ recipeId: recipe.id, quantity: 1 }); renderTempOrderItems(); orderRecipeSearchInput.value = ''; orderRecipeSearchResults.innerHTML = ''; }; orderRecipeSearchResults.appendChild(item); }); } 
+             }
             orderRecipeSearchInput.addEventListener('keyup', e => displayOrderRecipeResults(e.target.value));
             orderRecipeSearchInput.addEventListener('focus', () => displayOrderRecipeResults(orderRecipeSearchInput.value));
             document.addEventListener('click', (e) => { if (!orderRecipeSearchInput.contains(e.target) && !orderRecipeSearchResults.contains(e.target)) { orderRecipeSearchResults.innerHTML = ''; } });
-            function renderTempOrderItems() { const container = document.getElementById('order-selected-recipes'); container.innerHTML = ''; if (newOrderModalEl.items.length === 0) { container.innerHTML = `<p class="text-stone-500 text-center py-4">Busca y agrega productos.</p>`; return; } newOrderModalEl.items.forEach((item, index) => { const recipe = recipes.find(r => r.id === item.recipeId); const div = document.createElement('div'); div.className = 'flex items-center justify-between p-2 bg-gray-50 rounded'; div.innerHTML = `<div class="flex items-center gap-2"><input type="number" min="1" value="${item.quantity}" class="w-16 p-1 border rounded order-item-quantity" data-index="${index}"><label>${recipe.name}</label></div><button type="button" class="text-red-500 font-bold order-item-remove" data-index="${index}">X</button>`; container.appendChild(div); }); }
+            function renderTempOrderItems() { 
+                 const container = document.getElementById('order-selected-recipes'); container.innerHTML = ''; if (newOrderModalEl.items.length === 0) { container.innerHTML = `<p class="text-stone-500 text-center py-4">Busca y agrega productos.</p>`; return; } newOrderModalEl.items.forEach((item, index) => { const recipe = recipes.find(r => r.id === item.recipeId); const div = document.createElement('div'); div.className = 'flex items-center justify-between p-2 bg-gray-50 rounded'; div.innerHTML = `<div class="flex items-center gap-2"><input type="number" min="1" value="${item.quantity}" class="w-16 p-1 border rounded order-item-quantity" data-index="${index}"><label>${recipe ? recipe.name : 'Receta eliminada'}</label></div><button type="button" class="text-red-500 font-bold order-item-remove" data-index="${index}">X</button>`; container.appendChild(div); }); 
+            }
             document.getElementById('order-selected-recipes').addEventListener('change', e => { if (e.target.classList.contains('order-item-quantity')) { const index = parseInt(e.target.dataset.index); const quantity = parseInt(e.target.value); if (quantity > 0) newOrderModalEl.items[index].quantity = quantity; } });
             document.getElementById('order-selected-recipes').addEventListener('click', e => { if (e.target.classList.contains('order-item-remove')) { const index = parseInt(e.target.dataset.index); newOrderModalEl.items.splice(index, 1); renderTempOrderItems(); } });
             newOrderModalEl.querySelector('form').addEventListener('submit', async e => { 
-                e.preventDefault(); 
-                const customerName = e.target.querySelector('#customer-name').value; 
-                const customerPhone = e.target.querySelector('#customer-phone').value; 
-                const deliveryDate = e.target.querySelector('#delivery-date').value; 
-                const slicingOption = e.target.querySelector('input[name="slicing"]:checked').value; 
-                
-                const selectedHours = [];
-                e.target.querySelectorAll('#new-order-hours-grid .hour-selected').forEach(btn => {
-                    selectedHours.push(parseInt(btn.dataset.hour));
-                });
-
+                 e.preventDefault(); const customerName = e.target.querySelector('#customer-name').value; const customerPhone = e.target.querySelector('#customer-phone').value; const deliveryDate = e.target.querySelector('#delivery-date').value; const slicingOption = e.target.querySelector('input[name="slicing"]:checked').value; 
+                const selectedHours = []; e.target.querySelectorAll('#new-order-hours-grid .hour-selected').forEach(btn => selectedHours.push(parseInt(btn.dataset.hour)));
                 if (newOrderModalEl.items.length === 0) return alert('Debes seleccionar al menos un producto.'); 
-                try { 
-                    await ordersCollection.add({ 
-                        customerName, 
-                        customerPhone, 
-                        deliveryDate, 
-                        slicingOption, 
-                        deliveryHours: selectedHours, 
-                        items: newOrderModalEl.items, 
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp() 
-                    }); 
-                    closeModal(newOrderModalEl); 
-                } catch (error) { console.error(error); } 
+                try { await ordersCollection.add({ customerName, customerPhone, deliveryDate, slicingOption, deliveryHours: selectedHours, items: newOrderModalEl.items, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); closeModal(newOrderModalEl); } catch (error) { console.error(error); } 
             });
-            ordersContainer.addEventListener('click', async e => {
-                const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; const order = orders.find(o => o.id === id); if (!order) return;
-                
+            ordersContainer.addEventListener('click', async e => { 
+                 const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; const order = orders.find(o => o.id === id); if (!order) return;
                 if (action === 'delete-order') { if (!confirm('¿Seguro?')) return; await ordersCollection.doc(id).delete(); }
                 else if (action === 'complete-order') {
                     if (!confirm('¿Marcar este pedido como completado?')) return;
-                    
                     const itemsWithData = (order.items || []).map(item => { const recipe = recipes.find(r => r.id === item.recipeId); return { ...item, name: recipe ? recipe.name : "Receta eliminada", salePrice: recipe ? recipe.salePrice : 0 }; });
                     const completedOrderData = { ...order, items: itemsWithData, completedAt: firebase.firestore.FieldValue.serverTimestamp() };
-                    delete completedOrderData.id;
-
-                    const batch = db.batch();
-                    const newCompletedRef = completedOrdersCollection.doc();
-                    batch.set(newCompletedRef, completedOrderData);
-                    batch.delete(ordersCollection.doc(id));
-                    
+                    delete completedOrderData.id; 
+                    const batch = db.batch(); const newCompletedRef = completedOrdersCollection.doc(); batch.set(newCompletedRef, completedOrderData); batch.delete(ordersCollection.doc(id));
                     await batch.commit();
                 }
                 else if (action === 'toggle-materials') { const materialsEl = button.closest('.order-card').querySelector('.order-materials'); const isHidden = materialsEl.classList.contains('hidden'); if (isHidden) { const totalIngredients = {}; (order.items || []).forEach(item => { const recipe = recipes.find(r => r.id === item.recipeId); if (!recipe) return; (recipe.ingredients || []).forEach(ing => { const material = materials.find(m => m.id === ing.materialId); if (!material) return; if (!totalIngredients[material.name]) totalIngredients[material.name] = 0; totalIngredients[material.name] += ing.grams * item.quantity; }); }); materialsEl.innerHTML = `<h5 class="font-bold mb-2">Materiales para este pedido:</h5><ul class="space-y-1 list-disc list-inside">${Object.keys(totalIngredients).sort().map(name => `<li><strong>${name}:</strong> ${totalIngredients[name].toFixed(0)} gr</li>`).join('') || '<li>Sin materiales.</li>'}</ul>`; } materialsEl.classList.toggle('hidden'); button.querySelector('svg').classList.toggle('rotate-180'); }
                 else if (action === 'edit-order') { 
                     const form = editOrderModal.querySelector('form'); 
-                    form.querySelector('#edit-order-id').value = order.id; 
-                    form.querySelector('#edit-customer-name').value = order.customerName; 
-                    form.querySelector('#edit-customer-phone').value = order.customerPhone; 
-                    form.querySelector('#edit-delivery-date').value = order.deliveryDate; 
-                    
-                    const editHoursGrid = form.querySelector('#edit-order-hours-grid');
-                    editHoursGrid.querySelectorAll('.hour-btn').forEach(btn => btn.classList.remove('hour-selected'));
-                    if (order.deliveryHours) {
-                        order.deliveryHours.forEach(hour => {
-                            const btn = editHoursGrid.querySelector(`[data-hour="${hour}"]`);
-                            if (btn) btn.classList.add('hour-selected');
-                        });
-                    }
-
-                    const slicingValue = order.slicingOption || 'Sin asignar';
-                    form.querySelector(`input[name="edit-slicing"][value="${slicingValue}"]`).checked = true;
+                    form.querySelector('#edit-order-id').value = order.id; form.querySelector('#edit-customer-name').value = order.customerName; form.querySelector('#edit-customer-phone').value = order.customerPhone; form.querySelector('#edit-delivery-date').value = order.deliveryDate; 
+                    const editHoursGrid = form.querySelector('#edit-order-hours-grid'); generateHourGrid('edit-order-hours-grid', order.deliveryHours || []); // Pass existing hours
+                    const slicingValue = order.slicingOption || 'Sin asignar'; form.querySelector(`input[name="edit-slicing"][value="${slicingValue}"]`).checked = true;
                     openModal(editOrderModal); 
                 }
             });
             editOrderModal.querySelector('form').addEventListener('submit', async e => { 
-                e.preventDefault(); 
-                const id = e.target.querySelector('#edit-order-id').value; 
-                const customerName = e.target.querySelector('#edit-customer-name').value; 
-                const customerPhone = e.target.querySelector('#edit-customer-phone').value; 
-                const deliveryDate = e.target.querySelector('#edit-delivery-date').value; 
-                const slicingOption = e.target.querySelector('input[name="edit-slicing"]:checked').value;
-                
-                const selectedHours = [];
-                e.target.querySelectorAll('#edit-order-hours-grid .hour-selected').forEach(btn => {
-                    selectedHours.push(parseInt(btn.dataset.hour));
-                });
-
-                try { 
-                    await ordersCollection.doc(id).update({ customerName, customerPhone, deliveryDate, slicingOption, deliveryHours: selectedHours }); 
-                    closeModal(editOrderModal); 
-                } catch (error) { console.error(error); } 
+                 e.preventDefault(); const id = e.target.querySelector('#edit-order-id').value; const customerName = e.target.querySelector('#edit-customer-name').value; const customerPhone = e.target.querySelector('#edit-customer-phone').value; const deliveryDate = e.target.querySelector('#edit-delivery-date').value; const slicingOption = e.target.querySelector('input[name="edit-slicing"]:checked').value;
+                const selectedHours = []; e.target.querySelectorAll('#edit-order-hours-grid .hour-selected').forEach(btn => selectedHours.push(parseInt(btn.dataset.hour)));
+                try { await ordersCollection.doc(id).update({ customerName, customerPhone, deliveryDate, slicingOption, deliveryHours: selectedHours }); closeModal(editOrderModal); } catch (error) { console.error(error); } 
             });
             
-            async function renderHistory() {
+            async function renderHistory() { 
                 historyContent.innerHTML = '<p>Cargando historial...</p>';
                 try {
                     const snapshot = await completedOrdersCollection.orderBy("completedAt", "desc").get();
                     if (snapshot.empty) { historyContent.innerHTML = '<p>No hay ventas en el historial.</p>'; return; }
                     historyContent.innerHTML = snapshot.docs.map(doc => {
-                        const order = {id: doc.id, ...doc.data()};
-                        let totalSale = 0;
+                        const order = {id: doc.id, ...doc.data()}; let totalSale = 0;
                         const itemsHtml = (order.items || []).map(item => { totalSale += (item.salePrice || 0) * item.quantity; return `<li class="text-sm">${item.quantity} x ${item.name || 'Receta eliminada'}</li>`; }).join('');
                         const slicingHtml = order.slicingOption ? `<p class="text-xs text-gray-500"><strong>Corte:</strong> ${order.slicingOption}</p>`: '';
-                        
                         let timeSlotHistoryHtml = '';
                         if (order.deliveryHours && order.deliveryHours.length > 0) {
-                            const sortedHours = order.deliveryHours.sort((a,b) => a-b);
-                            const minHour = sortedHours[0];
-                            const maxHour = sortedHours[sortedHours.length - 1];
+                            const sortedHours = [...order.deliveryHours].sort((a,b) => a-b); const minHour = sortedHours[0]; const maxHour = sortedHours[sortedHours.length - 1];
                             const timeText = minHour === maxHour ? `a las ${minHour}hs` : `de ${minHour}hs a ${maxHour}hs`;
                             timeSlotHistoryHtml = `<p class="text-xs text-gray-500"><strong>Horario:</strong> ${timeText}</p>`;
                         }
-
                         return `<div class="p-4 border rounded-lg mb-2"><div class="flex justify-between"><div><p class="font-bold">${order.customerName}</p><p class="text-xs text-gray-500">Completado: ${new Date(order.completedAt.toDate()).toLocaleString('es-AR')}</p>${slicingHtml}${timeSlotHistoryHtml}</div><div class="flex items-center gap-2"><p class="font-bold">${formatCurrency(totalSale)}</p><button class="btn text-xs bg-yellow-100 text-yellow-800 hover:bg-yellow-200" data-action="uncomplete-order" data-id="${order.id}">Cancelar</button></div></div><ul class="list-disc list-inside mt-2">${itemsHtml}</ul></div>`;
                     }).join('');
                 } catch (error) { console.error("Error al cargar historial:", error); historyContent.innerHTML = '<p class="text-red-500">No se pudo cargar el historial.</p>'; }
-            }
-            historyContent.addEventListener('click', e => {
-                 const button = e.target.closest('button'); if (!button || button.dataset.action !== 'uncomplete-order') return;
+             }
+            historyContent.addEventListener('click', e => { 
+                  const button = e.target.closest('button'); if (!button || button.dataset.action !== 'uncomplete-order') return;
                  const id = button.dataset.id;
                  if(!confirm('¿Seguro que quieres mover este pedido de vuelta a "Pedidos Activos"?')) return;
                  completedOrdersCollection.doc(id).get().then(doc => {
                      if (doc.exists) {
                          const orderData = doc.data();
                          const activeOrderData = {
-                             customerName: orderData.customerName,
-                             customerPhone: orderData.customerPhone,
-                             deliveryDate: orderData.deliveryDate,
-                             slicingOption: orderData.slicingOption,
-                             deliveryHours: orderData.deliveryHours,
+                             customerName: orderData.customerName, customerPhone: orderData.customerPhone, deliveryDate: orderData.deliveryDate,
+                             slicingOption: orderData.slicingOption, deliveryHours: orderData.deliveryHours,
                              items: (orderData.items || []).map(item => ({recipeId: item.recipeId, quantity: item.quantity})),
-                             createdAt: orderData.createdAt || firebase.firestore.FieldValue.serverTimestamp()
+                             createdAt: orderData.createdAt || firebase.firestore.FieldValue.serverTimestamp() 
                          };
                          ordersCollection.add(activeOrderData).then(() => {
                              completedOrdersCollection.doc(id).delete();
-                             showSection('pedidos');
+                             showSection('pedidos'); 
                          });
                      }
                  });
-            });
+             });
 
-            // --- Hour Picker Logic ---
-            function generateHourGrid(containerId) {
+            function generateHourGrid(containerId, selectedHours = []) {
                 const container = document.getElementById(containerId);
-                container.innerHTML = '';
+                if (!container) return;
+                container.innerHTML = ''; 
                 for (let i = 0; i < 24; i++) {
                     const hourBtn = document.createElement('button');
                     hourBtn.type = 'button';
-                    hourBtn.className = 'hour-btn rounded';
+                    hourBtn.className = 'hour-btn rounded text-xs py-1'; 
                     hourBtn.textContent = `${i}hs`;
                     hourBtn.dataset.hour = i;
+                    if (selectedHours.includes(i)) {
+                        hourBtn.classList.add('hour-selected');
+                    }
                     container.appendChild(hourBtn);
                 }
-                container.addEventListener('click', e => {
-                    if (e.target.classList.contains('hour-btn')) {
-                        e.target.classList.toggle('hour-selected');
-                    }
+                 if (!container.hasAttribute('data-listener-added')) {
+                    container.addEventListener('click', e => {
+                        if (e.target.classList.contains('hour-btn')) {
+                            e.target.classList.toggle('hour-selected');
+                        }
+                    });
+                    container.setAttribute('data-listener-added', 'true');
+                 }
+            }
+             generateHourGrid('new-order-hours-grid');
+             generateHourGrid('edit-order-hours-grid');
+
+
+            // --- Production Tab Logic ---
+            
+            function initializeProductionState() {
+                 productionState = {};
+                 Object.values(timers).forEach(clearInterval);
+                 timers = {}; 
+                 orders.forEach(order => { 
+                    let itemCounter = 0;
+                    (order.items || []).forEach(item => {
+                        const recipe = recipes.find(r => r.id === item.recipeId);
+                        if (recipe) { 
+                            for(let i=0; i < item.quantity; i++) {
+                                const uniqueId = `${order.id}-item-${itemCounter}`;
+                                productionState[uniqueId] = { currentStepIndex: 0, status: 'pending', timerId: null, remainingSeconds: 0, completionTime: null };
+                                itemCounter++;
+                            }
+                        } else {
+                            console.warn(`Recipe with ID ${item.recipeId} not found for order ${order.id}. Skipping item.`);
+                        }
+                    });
                 });
             }
 
-            generateHourGrid('new-order-hours-grid');
-            generateHourGrid('edit-order-hours-grid');
-        }
+            function renderProductionBoard() {
+                if (!productionBoard) return; 
+                productionBoard.innerHTML = '';
+                orders.forEach((order) => { 
+                    const orderBlock = document.createElement('div');
+                    orderBlock.className = 'order-block rounded-lg shadow p-4 transition-all duration-300'; 
+                    orderBlock.id = order.id;
+                    
+                    let itemsHtml = '';
+                    let itemCounter = 0;
+                     (order.items || []).forEach(item => {
+                        const recipe = recipes.find(r => r.id === item.recipeId);
+                         if (recipe) { 
+                            for (let i = 0; i < item.quantity; i++) {
+                                const uniqueId = `${order.id}-item-${itemCounter}`;
+                                if (!productionState[uniqueId]) {
+                                     productionState[uniqueId] = { currentStepIndex: 0, status: 'pending', timerId: null, remainingSeconds: 0, completionTime: null };
+                                }
+                                itemsHtml += createItemCard(recipe.name, uniqueId); 
+                                itemCounter++;
+                            }
+                         }
+                    });
+
+                    orderBlock.innerHTML = `
+                        <div class="order-header border-b pb-2 mb-4">
+                            <h2 class="text-xl font-bold text-stone-700">${order.customerName}</h2>
+                            <p class="text-sm text-stone-500">Entrega: ${order.deliveryDate || 'Sin fecha'}</p> 
+                        </div>
+                        <div class="items-grid-container">${itemsHtml}</div>
+                        <div class="mt-4 hidden" id="delivered-btn-container-${order.id}">
+                            <button class="btn btn-green entregado-btn" data-order-id="${order.id}">Marcar como Entregado</button>
+                        </div>
+                    `;
+                    productionBoard.appendChild(orderBlock);
+                    checkOrderCompletionVisuals(order.id); 
+                });
+            }
+
+             function createItemCard(recipeName, uniqueId) { 
+                const recipe = recipes.find(r => r.name === recipeName); 
+                 const state = productionState[uniqueId];
+                 
+                 if (!recipe || !recipe.steps || recipe.steps.length === 0) {
+                     console.warn(`Recipe "${recipeName}" not found or has no steps defined.`);
+                     return `<div class="item-card item-pending" id="${uniqueId}">
+                                <div><h3 class="font-semibold text-stone-800">${recipeName}</h3></div>
+                                <p class="text-sm text-red-500 mt-auto">Error: Pasos no definidos para esta receta.</p>
+                             </div>`;
+                 }
+                 if (!state) {
+                      console.warn(`State not found for item "${uniqueId}". Initializing.`);
+                       productionState[uniqueId] = { currentStepIndex: 0, status: 'pending', timerId: null, remainingSeconds: 0, completionTime: null };
+                       state = productionState[uniqueId]; 
+                 }
+
+                const currentStep = recipe.steps[state.currentStepIndex];
+                 if (!currentStep) { 
+                     console.error(`Invalid step index ${state.currentStepIndex} for ${uniqueId}`);
+                      return `<div class="item-card item-pending" id="${uniqueId}">... Error ...</div>`; 
+                 }
+                const totalSteps = recipe.steps.length;
+                const isItemCompleted = state.status === 'completed';
+
+                let statusClass = '';
+                let actionButtonHtml = '';
+                let timerHtml = '';
+                let stepInfoHtml = ''; 
+                let completionTimeHtml = '';
+
+                if (isItemCompleted) {
+                    statusClass = 'item-completed';
+                    actionButtonHtml = '<p class="text-lg font-bold text-green-600 text-center mt-4">LISTO ✓</p>';
+                    stepInfoHtml = `<p class="text-sm text-green-600">Todos los pasos completados (${totalSteps}/${totalSteps})</p>`; 
+                } else {
+                    stepInfoHtml = `<p class="text-sm text-stone-500">Paso: ${state.currentStepIndex + 1}/${totalSteps}. ${currentStep.name}</p>`;
+                    switch(state.status) {
+                        case 'pending':
+                            statusClass = 'item-pending';
+                            const isFirstStep = state.currentStepIndex === 0;
+                            actionButtonHtml = `<button class="btn btn-gray btn-action" data-item-id="${uniqueId}" ${!isFirstStep ? 'disabled' : ''}>Comenzar ${currentStep.name}</button>`;
+                            break;
+                        case 'in-progress':
+                            statusClass = 'item-in-progress';
+                            if (currentStep.duration > 0) {
+                                timerHtml = `
+                                    <div class="timer-section">
+                                        <span class="timer-display" id="timer-${uniqueId}">00:00</span>
+                                        <button class="btn btn-sm btn-yellow btn-action" data-item-id="${uniqueId}">Saltar</button>
+                                    </div>`;
+                                actionButtonHtml = ''; 
+                            } else {
+                                actionButtonHtml = `<button class="btn btn-yellow btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
+                            }
+                            break;
+                        case 'action-required':
+                            statusClass = 'item-action-required';
+                            const finishedTime = state.completionTime ? state.completionTime.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '';
+                            completionTimeHtml = finishedTime ? `<span class="completion-time block text-center text-blue-600 text-xs">Finalizó: ${finishedTime}</span>` : '';
+                            timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00</span>${completionTimeHtml}</div>`;
+                            actionButtonHtml = `<button class="btn btn-blue btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
+                            break;
+                    }
+                }
+                return `
+                    <div class="item-card ${statusClass}" id="${uniqueId}">
+                        <div>
+                            <h3 class="font-semibold text-stone-800">${recipeName}</h3>
+                             ${stepInfoHtml} 
+                        </div>
+                        <div class="mt-auto"> ${timerHtml} ${actionButtonHtml} </div>
+                    </div>
+                `;
+            }
+            
+            productionBoard.addEventListener('click', e => {
+                 const actionButton = e.target.closest('.btn-action');
+                if (actionButton) {
+                    handleAction(actionButton);
+                }
+
+                const deliveredButton = e.target.closest('.entregado-btn');
+                if (deliveredButton) {
+                     const orderId = deliveredButton.dataset.orderId;
+                     const order = orders.find(o => o.id === orderId); 
+                     if (order && confirm(`¿Confirmas que el pedido para ${order.customerName} fue entregado?`)) {
+                         markOrderAsDelivered(order); 
+                     }
+                }
+            });
+
+             async function markOrderAsDelivered(order) {
+                 const orderId = order.id;
+                 loading.classList.remove('hidden'); 
+                 try {
+                     const itemsWithData = (order.items || []).map(item => { 
+                         const recipe = recipes.find(r => r.id === item.recipeId); 
+                         return { ...item, name: recipe ? recipe.name : "Receta eliminada", salePrice: recipe ? recipe.salePrice : 0 }; 
+                     });
+                     const completedOrderData = { ...order, items: itemsWithData, completedAt: firebase.firestore.FieldValue.serverTimestamp() };
+                     delete completedOrderData.id; 
+                     const batch = db.batch(); 
+                     const newCompletedRef = completedOrdersCollection.doc(); 
+                     batch.set(newCompletedRef, completedOrderData); 
+                     batch.delete(ordersCollection.doc(orderId));
+                     await batch.commit();
+                     Object.keys(productionState)
+                         .filter(key => key.startsWith(orderId + '-item-'))
+                         .forEach(key => {
+                             if(timers[key]) clearInterval(timers[key]);
+                             delete timers[key];
+                             delete productionState[key];
+                         });
+                     console.log(`Order ${orderId} marked as delivered and moved.`);
+                 } catch (error) {
+                     console.error("Error marking order as delivered:", error);
+                     alert("Hubo un error al marcar el pedido como entregado.");
+                 } finally {
+                    loading.classList.add('hidden'); 
+                 }
+             }
+
+
+            function handleAction(button) {
+                const uniqueId = button.dataset.itemId;
+                const state = productionState[uniqueId];
+                if (!state) return; 
+                const recipe = recipes.find(r => r.name === getRecipeNameFromId(uniqueId)); 
+                 if (!recipe || !recipe.steps) return; 
+                const currentStep = recipe.steps[state.currentStepIndex];
+
+                if (state.status === 'pending') {
+                    const isFirstStep = state.currentStepIndex === 0;
+                     let canStart = isFirstStep;
+                     if (!isFirstStep) { canStart = true; } 
+                     
+                     if(canStart) {
+                         startStep(uniqueId);
+                     } else {
+                         console.warn("Attempted to start step before previous completed:", uniqueId);
+                         alert("Debes completar el paso anterior primero."); 
+                     }
+                } else if (state.status === 'in-progress') {
+                    if (currentStep.duration > 0) { 
+                        if (confirm('¿Seguro que quieres saltar el temporizador y completar este paso?')) {
+                            completeStep(uniqueId);
+                        }
+                    } else { 
+                        completeStep(uniqueId);
+                    }
+                } else if (state.status === 'action-required') {
+                    completeStep(uniqueId);
+                }
+            }
+
+            function startStep(uniqueId) {
+                const state = productionState[uniqueId];
+                if (!state || state.status !== 'pending') return; 
+                const recipe = recipes.find(r => r.name === getRecipeNameFromId(uniqueId));
+                if (!recipe || !recipe.steps) return;
+                const currentStep = recipe.steps[state.currentStepIndex];
+
+                state.status = 'in-progress';
+                state.completionTime = null; 
+
+                if (currentStep.duration > 0) {
+                    state.remainingSeconds = currentStep.duration * 60;
+                    
+                    if (timers[uniqueId]) clearInterval(timers[uniqueId]);
+
+                    timers[uniqueId] = setInterval(() => {
+                        if (state.status !== 'in-progress') { 
+                            clearInterval(timers[uniqueId]);
+                            delete timers[uniqueId]; 
+                            return;
+                        }
+
+                        state.remainingSeconds--;
+                        const timerDisplay = document.getElementById(`timer-${uniqueId}`);
+                        if(timerDisplay) {
+                            const minutes = Math.floor(Math.max(0, state.remainingSeconds) / 60);
+                            const seconds = Math.floor(Math.max(0, state.remainingSeconds) % 60);
+                            timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                        }
+
+                        if (state.remainingSeconds < 0) { 
+                            clearInterval(timers[uniqueId]);
+                             delete timers[uniqueId]; 
+                            state.remainingSeconds = 0; 
+                            state.status = 'action-required';
+                            state.completionTime = new Date(); 
+                            playNotificationSound();
+                            updateItemCard(uniqueId); 
+                        }
+                    }, 1000);
+                }
+                
+                updateItemCard(uniqueId); 
+            }
+
+            function completeStep(uniqueId) {
+                const state = productionState[uniqueId];
+                if (!state || state.status === 'completed') return; 
+                const recipe = recipes.find(r => r.name === getRecipeNameFromId(uniqueId));
+                 if (!recipe || !recipe.steps) return; 
+                
+                if (timers[uniqueId]) {
+                    clearInterval(timers[uniqueId]); 
+                    delete timers[uniqueId]; 
+                }
+
+                state.timerId = null; 
+                state.remainingSeconds = 0;
+                state.completionTime = null; 
+
+                if (state.currentStepIndex < recipe.steps.length - 1) {
+                    state.currentStepIndex++;
+                    state.status = 'pending'; 
+                    updateItemCard(uniqueId); 
+                     setTimeout(() => { 
+                        const itemCard = document.getElementById(uniqueId); 
+                        if(itemCard) {
+                             const nextButton = itemCard.querySelector('.btn-action'); 
+                             if (nextButton && productionState[uniqueId]?.status === 'pending') { // Check state exists
+                                 nextButton.disabled = false;
+                             }
+                        }
+                     }, 0);
+                } else {
+                    state.status = 'completed'; 
+                    updateItemCard(uniqueId); 
+                }
+                
+                checkOrderCompletionVisuals(uniqueId.split('-item-')[0]); 
+            }
+
+
+            function updateItemCard(uniqueId) { 
+                const itemCard = document.getElementById(uniqueId);
+                if (!itemCard) return;
+
+                const state = productionState[uniqueId];
+                 if (!state) return; 
+                const recipe = recipes.find(r => r.name === getRecipeNameFromId(uniqueId));
+                 if (!recipe || !recipe.steps) { 
+                      itemCard.innerHTML = `<div><h3 class="font-semibold text-stone-800">${getRecipeNameFromId(uniqueId)}</h3></div><p class="text-red-500 mt-auto">Error: Receta o pasos no encontrados.</p>`;
+                      return;
+                 }
+
+                 const totalSteps = recipe.steps.length;
+                const currentStep = recipe.steps[state.currentStepIndex];
+                 if (!currentStep) return; 
+                const isItemCompleted = state.status === 'completed';
+
+                itemCard.className = 'item-card transition-all duration-300'; 
+                if (isItemCompleted) {
+                    itemCard.classList.add('item-completed');
+                } else {
+                    itemCard.classList.add(`item-${state.status}`);
+                }
+
+                let actionButtonHtml = '';
+                let timerHtml = '';
+                let stepInfoHtml = '';
+                let completionTimeHtml = '';
+
+                if (isItemCompleted) {
+                    actionButtonHtml = '<p class="text-lg font-bold text-green-600 text-center mt-4">LISTO ✓</p>';
+                    stepInfoHtml = `<p class="text-sm text-green-600">Todos los pasos completados (${totalSteps}/${totalSteps})</p>`;
+                } else {
+                    stepInfoHtml = `<p class="text-sm text-stone-500">Paso: ${state.currentStepIndex + 1}/${totalSteps}. ${currentStep.name}</p>`;
+                    
+                    switch(state.status) {
+                        case 'pending':
+                            const isFirstStepForRender = state.currentStepIndex === 0;
+                             let isDisabled = !isFirstStepForRender; 
+                             if (!isFirstStepForRender) { isDisabled = false; }
+
+                            actionButtonHtml = `<button class="btn btn-gray btn-action" data-item-id="${uniqueId}" ${isDisabled ? 'disabled' : ''}>Comenzar ${currentStep.name}</button>`;
+                            break;
+                        case 'in-progress':
+                            if (currentStep.duration > 0) {
+                                const minutes = Math.floor(Math.max(0, state.remainingSeconds) / 60);
+                                const seconds = Math.floor(Math.max(0, state.remainingSeconds) % 60);
+                                timerHtml = `
+                                    <div class="timer-section">
+                                        <span class="timer-display" id="timer-${uniqueId}">${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}</span>
+                                        <button class="btn btn-sm btn-yellow btn-action" data-item-id="${uniqueId}">Saltar</button>
+                                    </div>`;
+                                actionButtonHtml = ''; 
+                            } else {
+                                actionButtonHtml = `<button class="btn btn-yellow btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
+                            }
+                            break;
+                        case 'action-required':
+                            const finishedTime = state.completionTime ? state.completionTime.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '';
+                            completionTimeHtml = finishedTime ? `<span class="completion-time block text-center text-blue-600 text-xs">Finalizó: ${finishedTime}</span>` : '';
+                            timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00</span>${completionTimeHtml}</div>`;
+                            actionButtonHtml = `<button class="btn btn-blue btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
+                            break;
+                    }
+                }
+                itemCard.innerHTML = `
+                    <div>
+                        <h3 class="font-semibold text-stone-800">${getRecipeNameFromId(uniqueId)}</h3>
+                        ${stepInfoHtml} 
+                    </div>
+                    <div class="mt-auto"> ${timerHtml} ${actionButtonHtml} </div>
+                `;
+            }
+            
+            function getRecipeNameFromId(uniqueId) { 
+                const orderId = uniqueId.split('-item-')[0];
+                const itemIndex = parseInt(uniqueId.split('-item-')[1]);
+                const order = orders.find(o => o.id === orderId); 
+                if (!order) return 'Receta Desconocida';
+                let cumulativeIndex = 0;
+                for (let item of (order.items || [])) { 
+                    const recipe = recipes.find(r => r.id === item.recipeId); 
+                     if (recipe) { 
+                         if (itemIndex >= cumulativeIndex && itemIndex < cumulativeIndex + item.quantity) {
+                             return recipe.name; 
+                         }
+                         cumulativeIndex += item.quantity;
+                     }
+                }
+                return 'Receta Desconocida'; 
+            }
+            
+            function checkOrderCompletionVisuals(orderId) { 
+                const orderBlock = document.getElementById(orderId);
+                if (!orderBlock) return;
+                const allItemCards = orderBlock.querySelectorAll('.item-card');
+                 if (allItemCards.length === 0 && (orders.find(o=> o.id === orderId)?.items?.length ?? 0) === 0) { 
+                    orderBlock.classList.remove('order-block-completed');
+                     const btnContainer = document.getElementById(`delivered-btn-container-${orderId}`);
+                     if (btnContainer) btnContainer.classList.add('hidden');
+                     return;
+                 }
+                const allItemsCompleted = Array.from(allItemCards).every(card => productionState[card.id] && productionState[card.id].status === 'completed');
+                
+                const btnContainer = document.getElementById(`delivered-btn-container-${orderId}`);
+
+                if (allItemsCompleted) {
+                    orderBlock.classList.add('order-block-completed');
+                    if (btnContainer) btnContainer.classList.remove('hidden');
+                } else {
+                    orderBlock.classList.remove('order-block-completed');
+                    if (btnContainer) btnContainer.classList.add('hidden');
+                }
+            }
+
+            function playNotificationSound() { 
+                 try {
+                    const synth = new Tone.Synth().toDestination();
+                    const now = Tone.now();
+                    synth.triggerAttackRelease("B4", "16n", now);
+                    synth.triggerAttackRelease("B4", "16n", now + 0.2);
+                    synth.triggerAttackRelease("B4", "16n", now + 0.4);
+                    setTimeout(() => {
+                        synth.triggerAttackRelease("B4", "16n", Tone.now());
+                        synth.triggerAttackRelease("B4", "16n", Tone.now() + 0.2);
+                        synth.triggerAttackRelease("B4", "16n", Tone.now() + 0.4);
+                    }, 800); 
+                    setTimeout(() => {
+                        synth.triggerAttackRelease("B4", "16n", Tone.now());
+                        synth.triggerAttackRelease("B4", "16n", Tone.now() + 0.2);
+                        synth.triggerAttackRelease("B4", "16n", Tone.now() + 0.4);
+                    }, 1600); 
+                } catch (err) { console.warn("Could not play sound:", err); }
+             }
+            
+            showSection('pedidos'); 
+
+        } 
     });
     </script>
 </body>
