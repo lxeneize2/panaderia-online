@@ -289,7 +289,6 @@
             const recipesCollection = db.collection('recipes');
             const ordersCollection = db.collection('orders');
             const completedOrdersCollection = db.collection('completedOrders');
-            const productionStateCollection = db.collection('productionState'); // Collection for persisting state
 
             const navButtons = document.querySelectorAll('.nav-btn[data-section]');
             const sections = document.querySelectorAll('.app-section');
@@ -306,18 +305,16 @@
             
             loading.classList.remove('hidden');
 
-            let materialsLoaded = false, recipesLoaded = false, ordersLoaded = false, stateLoaded = false;
+            let materialsLoaded = false, recipesLoaded = false, ordersLoaded = false;
             let isInitialLoadComplete = false; 
             
             const checkAllLoaded = () => {
-                if (materialsLoaded && recipesLoaded && ordersLoaded && stateLoaded) {
+                if (materialsLoaded && recipesLoaded && ordersLoaded) {
+                    initializeProductionState(); 
+                    renderAll();
                     if (!isInitialLoadComplete) {
-                        initializeProductionState(); 
-                        renderAll();
                         renderProductionBoard(); 
                         isInitialLoadComplete = true;
-                    } else {
-                         renderAll();
                     }
                     loading.classList.add('hidden'); 
                 }
@@ -345,22 +342,6 @@
                  ordersLoaded = true;
                  checkAllLoaded(); 
             }, error => { console.error("Error fetching orders:", error); loading.classList.add('hidden'); });
-            
-            productionStateCollection.onSnapshot(snapshot => {
-                const newState = {};
-                snapshot.docs.forEach(doc => {
-                    newState[doc.id] = doc.data();
-                });
-                productionState = newState; // Update global state cache
-                stateLoaded = true;
-                checkAllLoaded();
-                
-                // When state updates, re-render production board if visible
-                if (isInitialLoadComplete && !document.getElementById('section-produccion').classList.contains('hidden')) {
-                    renderProductionBoard();
-                }
-            }, error => { console.error("Error fetching production state:", error); loading.classList.add('hidden'); });
-
 
             const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount || 0);
             const formatMinutes = (mins) => { if (!mins || mins < 1) return '0 min'; const h = Math.floor(mins / 60); const m = mins % 60; return `${h > 0 ? h + 'h ' : ''}${m}min`; };
@@ -515,7 +496,7 @@
                  const hours = Math.floor(step.duration / 60);
                  const minutes = step.duration % 60;
                  stepDiv.innerHTML = `
-                     <input type="text" class="step-name" placeholder="Nombre del paso" value="${step.name || ''}" required>
+                     <input type="text" class="step-name" placeholder="Nombre del paso" value="${step.name || ''}">
                      <input type="number" class="step-hours" placeholder="Hs" value="${hours}" min="0">
                      <span class="text-stone-500 text-sm">hs</span>
                      <input type="number" class="step-minutes" placeholder="Min" value="${minutes}" min="0" max="59">
@@ -525,10 +506,6 @@
                  stepsContainer.appendChild(stepDiv);
              }
 
-            function setActiveTab(tabName) {
-                recipeTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
-                recipeTabContents.forEach(c => c.classList.toggle('hidden', c.id !== `tab-content-${tabName}`));
-            }
 
             document.getElementById('add-recipe-btn').addEventListener('click', () => {
                 const form = recipeModal.querySelector('form');
@@ -538,7 +515,8 @@
                 form.querySelector('#ingredients-container').innerHTML = '';
                 stepsContainer.innerHTML = ''; 
                 addProductionStepInput(); 
-                setActiveTab('details');
+                recipeTabs.forEach((t, i) => t.classList.toggle('active', i === 0));
+                recipeTabContents.forEach((c, i) => c.classList.toggle('hidden', i !== 0));
                 openModal(recipeModal);
             });
 
@@ -574,7 +552,8 @@
                     } else {
                         addProductionStepInput(); 
                     }
-                    setActiveTab('details');
+                    recipeTabs.forEach((t, i) => t.classList.toggle('active', i === 0));
+                    recipeTabContents.forEach((c, i) => c.classList.toggle('hidden', i !== 0));
                     openModal(recipeModal); 
                 } else if (action === 'delete-recipe') { 
                     if (!confirm('¿Seguro?')) return; 
@@ -621,21 +600,21 @@
                 });
 
                 if (!name || !salePrice) {
-                    setActiveTab('details');
+                    recipeTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'details'));
+                    recipeTabContents.forEach(c => c.classList.toggle('hidden', c.id !== 'tab-content-details'));
                     alert('Por favor, completa los campos obligatorios "Nombre" y "Precio Venta" en la pestaña "Detalles".');
-                    e.target.querySelector('#recipe-name').focus();
                     return;
                 }
                 if (ingredients.length === 0) {
-                     setActiveTab('details');
+                     recipeTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'details'));
+                     recipeTabContents.forEach(c => c.classList.toggle('hidden', c.id !== 'tab-content-details'));
                      alert('Debe agregar al menos un ingrediente en la pestaña "Detalles".');
-                     e.target.querySelector('#ingredient-search').focus();
                      return;
                 }
                 if (productionSteps.length === 0 || hasEmptyStepName) {
-                     setActiveTab('steps');
+                     recipeTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'steps'));
+                     recipeTabContents.forEach(c => c.classList.toggle('hidden', c.id !== 'tab-content-steps'));
                      alert('Debes añadir al menos un paso de producción y todos los pasos deben tener un nombre.');
-                     stepsContainer.querySelector('.step-name').focus();
                      return;
                 }
 
@@ -681,7 +660,7 @@
             orderRecipeSearchInput.addEventListener('focus', () => displayOrderRecipeResults(orderRecipeSearchInput.value));
             document.addEventListener('click', (e) => { if (!orderRecipeSearchInput.contains(e.target) && !orderRecipeSearchResults.contains(e.target)) { orderRecipeSearchResults.innerHTML = ''; } });
             function renderTempOrderItems() { 
-                 const container = document.getElementById('order-selected-recipes'); container.innerHTML = ''; if (newOrderModalEl.items.length === 0) { container.innerHTML = `<p class="text-stone-500 text-center py-4">Busca y agrega productos.</p>`; return; } newOrderModalEl.items.forEach((item, index) => { const recipe = recipes.find(r => r.id === item.recipeId); const div = document.createElement('div'); div.className = 'flex items-center justify-between p-2 bg-gray-50 rounded'; div.innerHTML = `<div class="flex items-center gap-2"><input type="number" min="1" value="${item.quantity}" class="w-16 p-1 border rounded order-item-quantity" data-index="${index}"><label>${recipe ? recipe.name : 'Receta eliminada'}</label></div><button type="button" class="text-red-500 font-bold order-item-remove" data-index="${index}">X</button></div>`; container.appendChild(div); }); 
+                 const container = document.getElementById('order-selected-recipes'); container.innerHTML = ''; if (newOrderModalEl.items.length === 0) { container.innerHTML = `<p class="text-stone-500 text-center py-4">Busca y agrega productos.</p>`; return; } newOrderModalEl.items.forEach((item, index) => { const recipe = recipes.find(r => r.id === item.recipeId); const div = document.createElement('div'); div.className = 'flex items-center justify-between p-2 bg-gray-50 rounded'; div.innerHTML = `<div class="flex items-center gap-2"><input type="number" min="1" value="${item.quantity}" class="w-16 p-1 border rounded order-item-quantity" data-index="${index}"><label>${recipe ? recipe.name : 'Receta eliminada'}</label></div><button type="button" class="text-red-500 font-bold order-item-remove" data-index="${index}">X</button>`; container.appendChild(div); }); 
             }
             document.getElementById('order-selected-recipes').addEventListener('change', e => { if (e.target.classList.contains('order-item-quantity')) { const index = parseInt(e.target.dataset.index); const quantity = parseInt(e.target.value); if (quantity > 0) newOrderModalEl.items[index].quantity = quantity; } });
             document.getElementById('order-selected-recipes').addEventListener('click', e => { if (e.target.classList.contains('order-item-remove')) { const index = parseInt(e.target.dataset.index); newOrderModalEl.items.splice(index, 1); renderTempOrderItems(); } });
@@ -788,6 +767,7 @@
             
             function initializeProductionState() {
                  const newProductionState = {};
+                 const newTimers = {};
                  
                  orders.forEach(order => { 
                     let itemCounter = 0;
@@ -799,14 +779,11 @@
                                 
                                 if (productionState[uniqueId]) {
                                     newProductionState[uniqueId] = productionState[uniqueId];
+                                    if (timers[uniqueId]) {
+                                        newTimers[uniqueId] = timers[uniqueId];
+                                    }
                                 } else {
-                                    newProductionState[uniqueId] = { 
-                                        currentStepIndex: 0, 
-                                        status: 'pending', 
-                                        timerStartTime: null, 
-                                        remainingSeconds: 0, 
-                                        completionTime: null 
-                                    };
+                                    newProductionState[uniqueId] = { currentStepIndex: 0, status: 'pending', timerId: null, remainingSeconds: 0, completionTime: null };
                                 }
                                 itemCounter++;
                             }
@@ -817,28 +794,13 @@
                 });
                 
                 Object.keys(timers).forEach(timerId => {
-                    if (!newProductionState[timerId]) {
+                    if (!newTimers[timerId]) {
                         clearInterval(timers[timerId]);
-                        delete timers[timerId];
                     }
                 });
 
                 productionState = newProductionState;
-                
-                // Now, check database state
-                productionStateCollection.get().then(snapshot => {
-                    snapshot.docs.forEach(doc => {
-                        if (productionState[doc.id]) {
-                            // Overwrite local state with DB state
-                            productionState[doc.id] = doc.data();
-                        } else {
-                            // This state is orphaned (order was deleted/completed), remove it
-                            doc.ref.delete();
-                        }
-                    });
-                    // After syncing with DB, render
-                    renderProductionBoard();
-                });
+                timers = newTimers;
             }
 
             function renderProductionBoard() {
@@ -881,7 +843,6 @@
             }
             
             function formatTimer(totalSeconds) {
-                totalSeconds = Math.max(0, totalSeconds);
                 const hours = Math.floor(totalSeconds / 3600);
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = Math.floor(totalSeconds % 60);
@@ -905,8 +866,9 @@
                              </div>`;
                  }
                  if (!state) {
-                      console.warn(`State not found for item "${uniqueId}".`);
-                       return `<div class="item-card item-pending" id="${uniqueId}">...</div>`; // Render placeholder
+                      console.warn(`State not found for item "${uniqueId}". Initializing.`);
+                       productionState[uniqueId] = { currentStepIndex: 0, status: 'pending', timerId: null, remainingSeconds: 0, completionTime: null };
+                       state = productionState[uniqueId]; 
                  }
 
                 const currentStep = recipe.steps[state.currentStepIndex];
@@ -938,48 +900,19 @@
                         case 'in-progress':
                             statusClass = 'item-in-progress';
                             if (currentStep.duration > 0) {
-                                let remainingSeconds = 0;
-                                if (state.timerStartTime) {
-                                    const durationInSeconds = currentStep.duration * 60;
-                                    const startTime = state.timerStartTime.toDate().getTime();
-                                    const elapsedTime = (Date.now() - startTime) / 1000;
-                                    remainingSeconds = durationInSeconds - elapsedTime;
-                                }
-
-                                if (remainingSeconds > 0) {
-                                     timerHtml = `
-                                        <div class="timer-section">
-                                            <span class="timer-display" id="timer-${uniqueId}">${formatTimer(remainingSeconds)}</span>
-                                            <button class="btn btn-sm btn-yellow btn-action" data-item-id="${uniqueId}">Saltar</button>
-                                        </div>`;
-                                     actionButtonHtml = ''; 
-                                     // Start local timer
-                                     startLocalTimer(uniqueId, remainingSeconds, currentStep.duration * 60);
-                                } else {
-                                    // Timer finished while page was closed
-                                    state.status = 'action-required';
-                                    state.completionTime = new Date(state.timerStartTime.toDate().getTime() + (currentStep.duration * 60 * 1000));
-                                    productionStateCollection.doc(uniqueId).update({ status: 'action-required', completionTime: state.completionTime });
-                                    // Fall-through to 'action-required' case
-                                }
-                            } 
-                            
-                            if (state.status === 'in-progress' && currentStep.duration === 0) { // Manual step
+                                timerHtml = `
+                                    <div class="timer-section">
+                                        <span class="timer-display" id="timer-${uniqueId}">${formatTimer(state.remainingSeconds)}</span>
+                                        <button class="btn btn-sm btn-yellow btn-action" data-item-id="${uniqueId}">Saltar</button>
+                                    </div>`;
+                                actionButtonHtml = ''; 
+                            } else {
                                 actionButtonHtml = `<button class="btn btn-yellow btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
-                            }
-                            
-                            // This code will run if fall-through happens
-                            if(state.status === 'action-required') {
-                                statusClass = 'item-action-required';
-                                const finishedTime = state.completionTime ? state.completionTime.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '';
-                                completionTimeHtml = finishedTime ? `<span class="completion-time block text-center text-blue-600 text-xs">Finalizó: ${finishedTime}</span>` : '';
-                                timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00</span>${completionTimeHtml}</div>`;
-                                actionButtonHtml = `<button class="btn btn-blue btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
                             }
                             break;
                         case 'action-required':
                             statusClass = 'item-action-required';
-                            const finishedTime = state.completionTime ? state.completionTime.toDate().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : 'Ahora';
+                            const finishedTime = state.completionTime ? state.completionTime.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '';
                             completionTimeHtml = finishedTime ? `<span class="completion-time block text-center text-blue-600 text-xs">Finalizó: ${finishedTime}</span>` : '';
                             timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00</span>${completionTimeHtml}</div>`;
                             actionButtonHtml = `<button class="btn btn-blue btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
@@ -1023,21 +956,18 @@
                      });
                      const completedOrderData = { ...order, items: itemsWithData, completedAt: firebase.firestore.FieldValue.serverTimestamp() };
                      delete completedOrderData.id; 
-
                      const batch = db.batch(); 
                      const newCompletedRef = completedOrdersCollection.doc(); 
                      batch.set(newCompletedRef, completedOrderData); 
                      batch.delete(ordersCollection.doc(orderId));
-                     
+                     await batch.commit();
                      Object.keys(productionState)
                          .filter(key => key.startsWith(orderId + '-item-'))
                          .forEach(key => {
                              if(timers[key]) clearInterval(timers[key]);
                              delete timers[key];
-                             batch.delete(productionStateCollection.doc(key)); // Delete from DB
+                             delete productionState[key];
                          });
-                     
-                     await batch.commit();
                      console.log(`Order ${orderId} marked as delivered and moved.`);
                  } catch (error) {
                      console.error("Error marking order as delivered:", error);
@@ -1057,7 +987,16 @@
                 const currentStep = recipe.steps[state.currentStepIndex];
 
                 if (state.status === 'pending') {
-                     startStep(uniqueId);
+                    const isFirstStep = state.currentStepIndex === 0;
+                     let canStart = isFirstStep;
+                     if (!isFirstStep) { canStart = true; } 
+                     
+                     if(canStart) {
+                         startStep(uniqueId);
+                     } else {
+                         console.warn("Attempted to start step before previous completed:", uniqueId);
+                         alert("Debes completar el paso anterior primero."); 
+                     }
                 } else if (state.status === 'in-progress') {
                     if (currentStep.duration > 0) { 
                         if (confirm('¿Seguro que quieres saltar el temporizador y completar este paso?')) {
@@ -1082,50 +1021,39 @@
                 state.completionTime = null; 
 
                 if (currentStep.duration > 0) {
-                    state.timerStartTime = firebase.firestore.FieldValue.serverTimestamp(); // Set server timestamp
-                    productionStateCollection.doc(uniqueId).update({
-                        status: 'in-progress',
-                        timerStartTime: state.timerStartTime,
-                        completionTime: null
-                    });
-                } else {
-                     productionStateCollection.doc(uniqueId).update({
-                        status: 'in-progress',
-                        completionTime: null
-                    });
-                }
-            }
-            
-            function startLocalTimer(uniqueId, remainingSeconds, totalDurationSeconds) {
-                if (timers[uniqueId]) clearInterval(timers[uniqueId]); // Clear existing local timer
-
-                let localRemaining = remainingSeconds;
-
-                timers[uniqueId] = setInterval(() => {
-                    const timerDisplay = document.getElementById(`timer-${uniqueId}`);
-                    if (timerDisplay) {
-                        timerDisplay.textContent = formatTimer(Math.max(0, localRemaining));
-                    }
+                    state.remainingSeconds = currentStep.duration * 60;
                     
-                    if (localRemaining <= 0) {
-                        clearInterval(timers[uniqueId]);
-                        delete timers[uniqueId];
-                        // State will be updated by Firestore listener, but force an update check
-                        const state = productionState[uniqueId];
-                        if (state && state.status !== 'action-required') {
-                            const startTime = state.timerStartTime.toDate().getTime();
-                            const completionTime = new Date(startTime + (totalDurationSeconds * 1000));
-                             productionStateCollection.doc(uniqueId).update({ 
-                                 status: 'action-required', 
-                                 completionTime: completionTime 
-                             });
-                             playNotificationSound();
-                        }
-                    }
-                    localRemaining--;
-                }, 1000);
-            }
+                    if (timers[uniqueId]) clearInterval(timers[uniqueId]);
+                    
+                    updateItemCard(uniqueId); // Initial render with formatted time
 
+                    timers[uniqueId] = setInterval(() => {
+                        if (productionState[uniqueId]?.status !== 'in-progress') { 
+                            clearInterval(timers[uniqueId]);
+                            delete timers[uniqueId]; 
+                            return;
+                        }
+
+                        state.remainingSeconds--;
+                        const timerDisplay = document.getElementById(`timer-${uniqueId}`);
+                        if(timerDisplay) {
+                            timerDisplay.textContent = formatTimer(Math.max(0, state.remainingSeconds));
+                        }
+
+                        if (state.remainingSeconds < 0) { 
+                            clearInterval(timers[uniqueId]);
+                             delete timers[uniqueId]; 
+                            state.remainingSeconds = 0; 
+                            state.status = 'action-required';
+                            state.completionTime = new Date(); 
+                            playNotificationSound();
+                            updateItemCard(uniqueId); 
+                        }
+                    }, 1000);
+                }
+                
+                updateItemCard(uniqueId); 
+            }
 
             function completeStep(uniqueId) {
                 const state = productionState[uniqueId];
@@ -1138,27 +1066,38 @@
                     delete timers[uniqueId]; 
                 }
 
-                const newState = {
-                    timerStartTime: null,
-                    completionTime: null
-                };
+                state.timerId = null; 
+                state.remainingSeconds = 0;
+                state.completionTime = null; 
 
                 if (state.currentStepIndex < recipe.steps.length - 1) {
-                    newState.currentStepIndex = state.currentStepIndex + 1;
-                    newState.status = 'pending';
+                    state.currentStepIndex++;
+                    state.status = 'pending'; 
+                    updateItemCard(uniqueId); 
+                     setTimeout(() => { 
+                        const itemCard = document.getElementById(uniqueId); 
+                        if(itemCard) {
+                             const nextButton = itemCard.querySelector('.btn-action'); 
+                             if (nextButton && productionState[uniqueId]?.status === 'pending') { 
+                                 nextButton.disabled = false;
+                             }
+                        }
+                     }, 0);
                 } else {
-                    newState.status = 'completed'; 
+                    state.status = 'completed'; 
+                    updateItemCard(uniqueId); 
                 }
                 
-                productionStateCollection.doc(uniqueId).update(newState);
+                checkOrderCompletionVisuals(uniqueId.split('-item-')[0]); 
             }
+
 
             function updateItemCard(uniqueId) { 
                 const itemCard = document.getElementById(uniqueId);
                 if (!itemCard) return;
 
                 const state = productionState[uniqueId];
-                 if (!state) { console.warn(`No state found for ${uniqueId} in updateItemCard`); return; }
+                 if (!state) return; 
                 const recipe = recipes.find(r => r.name === getRecipeNameFromId(uniqueId));
                  if (!recipe || !recipe.steps) { 
                       itemCard.innerHTML = `<div><h3 class="font-semibold text-stone-800">${getRecipeNameFromId(uniqueId)}</h3></div><p class="text-red-500 mt-auto">Error: Receta o pasos no encontrados.</p>`;
@@ -1167,10 +1106,7 @@
 
                  const totalSteps = recipe.steps.length;
                 const currentStep = recipe.steps[state.currentStepIndex];
-                 if (!currentStep) {
-                     console.error(`Invalid step index ${state.currentStepIndex} for ${uniqueId}`);
-                     return; 
-                 }
+                 if (!currentStep) return; 
                 const isItemCompleted = state.status === 'completed';
 
                 itemCard.className = 'item-card transition-all duration-300'; 
@@ -1194,39 +1130,27 @@
                     switch(state.status) {
                         case 'pending':
                             const isFirstStepForRender = state.currentStepIndex === 0;
-                            actionButtonHtml = `<button class="btn btn-gray btn-action" data-item-id="${uniqueId}" ${!isFirstStepForRender ? 'disabled' : ''}>Comenzar ${currentStep.name}</button>`;
+                             let isDisabled = !isFirstStepForRender; 
+                             if (!isFirstStepForRender) { 
+                                isDisabled = false; 
+                             }
+
+                            actionButtonHtml = `<button class="btn btn-gray btn-action" data-item-id="${uniqueId}" ${isDisabled ? 'disabled' : ''}>Comenzar ${currentStep.name}</button>`;
                             break;
                         case 'in-progress':
                             if (currentStep.duration > 0) {
-                                let remainingSeconds = 0;
-                                let durationInSeconds = currentStep.duration * 60;
-                                if (state.timerStartTime && state.timerStartTime.toDate) { // Check if it's a Firestore Timestamp
-                                    const startTime = state.timerStartTime.toDate().getTime();
-                                    const elapsedTime = (Date.now() - startTime) / 1000;
-                                    remainingSeconds = durationInSeconds - elapsedTime;
-                                }
-
-                                if (remainingSeconds > 0) {
-                                    timerHtml = `
-                                        <div class="timer-section">
-                                            <span class="timer-display" id="timer-${uniqueId}">${formatTimer(remainingSeconds)}</span>
-                                            <button class="btn btn-sm btn-yellow btn-action" data-item-id="${uniqueId}">Saltar</button>
-                                        </div>`;
-                                    actionButtonHtml = '';
-                                    startLocalTimer(uniqueId, remainingSeconds, durationInSeconds);
-                                } else {
-                                    // Timer finished, or state is inconsistent. Mark as action-required.
-                                    state.status = 'action-required';
-                                    state.completionTime = state.timerStartTime ? new Date(state.timerStartTime.toDate().getTime() + (durationInSeconds * 1000)) : new Date();
-                                    productionStateCollection.doc(uniqueId).update({ status: 'action-required', completionTime: state.completionTime });
-                                    // This will trigger a re-render via snapshot, so we don't need to draw the 'action-required' state here.
-                                }
+                                timerHtml = `
+                                    <div class="timer-section">
+                                        <span class="timer-display" id="timer-${uniqueId}">${formatTimer(state.remainingSeconds)}</span>
+                                        <button class="btn btn-sm btn-yellow btn-action" data-item-id="${uniqueId}">Saltar</button>
+                                    </div>`;
+                                actionButtonHtml = ''; 
                             } else {
                                 actionButtonHtml = `<button class="btn btn-yellow btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
                             }
                             break;
                         case 'action-required':
-                            const finishedTime = state.completionTime ? state.completionTime.toDate().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '';
+                            const finishedTime = state.completionTime ? state.completionTime.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '';
                             completionTimeHtml = finishedTime ? `<span class="completion-time block text-center text-blue-600 text-xs">Finalizó: ${finishedTime}</span>` : '';
                             timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00</span>${completionTimeHtml}</div>`;
                             actionButtonHtml = `<button class="btn btn-blue btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
@@ -1310,4 +1234,3 @@
     </script>
 </body>
 </html>
-
