@@ -361,7 +361,6 @@
                 }
             }, error => { 
                 console.error("Error fetching production state:", error); 
-                // Don't block loading if state fails, just assume it's empty
                 stateLoaded = true;
                 checkCoreDataLoaded();
             });
@@ -495,13 +494,7 @@
              recipeTabs.forEach(tab => {
                  tab.addEventListener('click', () => {
                      const targetTab = tab.dataset.tab;
-                     
-                     recipeTabs.forEach(t => t.classList.remove('active'));
-                     tab.classList.add('active');
-
-                     recipeTabContents.forEach(content => {
-                         content.classList.toggle('hidden', content.id !== `tab-content-${targetTab}`);
-                     });
+                     setActiveTab(targetTab);
                  });
              });
 
@@ -809,7 +802,6 @@
                                         currentStepIndex: 0, 
                                         status: 'pending', 
                                         timerStartTime: null, 
-                                        remainingSeconds: 0, 
                                         completionTime: null 
                                     };
                                 }
@@ -890,7 +882,7 @@
                 if (hours > 0) {
                     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                 } else {
-                    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    return `00:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                 }
             }
 
@@ -939,11 +931,13 @@
                             statusClass = 'item-in-progress';
                             if (currentStep.duration > 0) {
                                 let remainingSeconds = 0;
-                                if (state.timerStartTime) {
-                                    const durationInSeconds = currentStep.duration * 60;
+                                let durationInSeconds = currentStep.duration * 60;
+                                if (state.timerStartTime && state.timerStartTime.toDate) { 
                                     const startTime = state.timerStartTime.toDate().getTime();
                                     const elapsedTime = (Date.now() - startTime) / 1000;
                                     remainingSeconds = durationInSeconds - elapsedTime;
+                                } else if (state.timerStartTime) {
+                                    remainingSeconds = durationInSeconds; 
                                 }
 
                                 if (remainingSeconds > 0) {
@@ -956,7 +950,7 @@
                                      startLocalTimer(uniqueId, remainingSeconds, currentStep.duration * 60);
                                 } else {
                                     state.status = 'action-required';
-                                    state.completionTime = new Date(state.timerStartTime.toDate().getTime() + (currentStep.duration * 60 * 1000));
+                                    state.completionTime = state.timerStartTime ? new Date(state.timerStartTime.toDate().getTime() + (currentStep.duration * 60 * 1000)) : new Date();
                                     productionStateCollection.doc(uniqueId).update({ status: 'action-required', completionTime: state.completionTime });
                                 }
                             } 
@@ -967,9 +961,9 @@
                             
                             if(state.status === 'action-required') {
                                 statusClass = 'item-action-required';
-                                const finishedTime = state.completionTime ? state.completionTime.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '';
+                                const finishedTime = state.completionTime.toDate().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
                                 completionTimeHtml = finishedTime ? `<span class="completion-time block text-center text-blue-600 text-xs">Finalizó: ${finishedTime}</span>` : '';
-                                timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00</span>${completionTimeHtml}</div>`;
+                                timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00:00</span>${completionTimeHtml}</div>`;
                                 actionButtonHtml = `<button class="btn btn-blue btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
                             }
                             break;
@@ -977,7 +971,7 @@
                             statusClass = 'item-action-required';
                             const finishedTime = state.completionTime ? state.completionTime.toDate().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : 'Ahora';
                             completionTimeHtml = finishedTime ? `<span class="completion-time block text-center text-blue-600 text-xs">Finalizó: ${finishedTime}</span>` : '';
-                            timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00</span>${completionTimeHtml}</div>`;
+                            timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00:00</span>${completionTimeHtml}</div>`;
                             actionButtonHtml = `<button class="btn btn-blue btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
                             break;
                     }
@@ -1030,7 +1024,7 @@
                          .forEach(key => {
                              if(timers[key]) clearInterval(timers[key]);
                              delete timers[key];
-                             batch.delete(productionStateCollection.doc(key)); // Delete from DB
+                             batch.delete(productionStateCollection.doc(key)); 
                          });
                      
                      await batch.commit();
@@ -1078,8 +1072,8 @@
                 state.completionTime = null; 
 
                 if (currentStep.duration > 0) {
-                    state.timerStartTime = firebase.firestore.FieldValue.serverTimestamp(); // Set server timestamp
-                    productionStateCollection.doc(uniqueId).set({ // Use set with merge to create if not exists
+                    state.timerStartTime = firebase.firestore.FieldValue.serverTimestamp(); 
+                    productionStateCollection.doc(uniqueId).set({ 
                         ...state,
                         status: 'in-progress',
                         timerStartTime: state.timerStartTime,
@@ -1191,27 +1185,18 @@
                     switch(state.status) {
                         case 'pending':
                             const isFirstStepForRender = state.currentStepIndex === 0;
-                             let isDisabled = !isFirstStepForRender; 
-                             if (state.currentStepIndex > 0) {
-                                // Check previous step status from *loaded state*
-                                // This logic is tricky, better to enable by default and let logic handle it
-                                isDisabled = false; // Assume enabled, handle click logic will check
-                             }
-                             if (isFirstStepForRender) isDisabled = false;
-
-                            actionButtonHtml = `<button class="btn btn-gray btn-action" data-item-id="${uniqueId}" ${isDisabled ? 'disabled' : ''}>Comenzar ${currentStep.name}</button>`;
+                            actionButtonHtml = `<button class="btn btn-gray btn-action" data-item-id="${uniqueId}" ${!isFirstStepForRender ? 'disabled' : ''}>Comenzar ${currentStep.name}</button>`;
                             break;
                         case 'in-progress':
                             if (currentStep.duration > 0) {
                                 let remainingSeconds = 0;
                                 let durationInSeconds = currentStep.duration * 60;
-                                if (state.timerStartTime && state.timerStartTime.toDate) { // Check if it's a Firestore Timestamp
+                                if (state.timerStartTime && state.timerStartTime.toDate) { 
                                     const startTime = state.timerStartTime.toDate().getTime();
                                     const elapsedTime = (Date.now() - startTime) / 1000;
                                     remainingSeconds = durationInSeconds - elapsedTime;
                                 } else if (state.timerStartTime) {
-                                    // It's not a timestamp yet, server value is pending
-                                    remainingSeconds = durationInSeconds; // Show full time until server confirms
+                                    remainingSeconds = durationInSeconds; 
                                 }
 
                                 if (remainingSeconds > 0) {
@@ -1223,16 +1208,14 @@
                                     actionButtonHtml = '';
                                     startLocalTimer(uniqueId, remainingSeconds, durationInSeconds);
                                 } else {
-                                    // Timer finished, or state is inconsistent. Mark as action-required.
                                     const newCompletionTime = state.timerStartTime ? new Date(state.timerStartTime.toDate().getTime() + (durationInSeconds * 1000)) : new Date();
                                     if(state.status !== 'action-required'){
                                         productionStateCollection.doc(uniqueId).update({ status: 'action-required', completionTime: newCompletionTime });
                                     }
-                                    // Render as action-required
                                     statusClass = 'item-action-required';
                                     const finishedTime = newCompletionTime.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
                                     completionTimeHtml = finishedTime ? `<span class="completion-time block text-center text-blue-600 text-xs">Finalizó: ${finishedTime}</span>` : '';
-                                    timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00</span>${completionTimeHtml}</div>`;
+                                    timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">${formatTimer(0)}</span>${completionTimeHtml}</div>`;
                                     actionButtonHtml = `<button class="btn btn-blue btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
                                 }
                             } else {
@@ -1242,7 +1225,7 @@
                         case 'action-required':
                             const finishedTime = state.completionTime ? state.completionTime.toDate().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : 'Ahora';
                             completionTimeHtml = finishedTime ? `<span class="completion-time block text-center text-blue-600 text-xs">Finalizó: ${finishedTime}</span>` : '';
-                            timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">00:00</span>${completionTimeHtml}</div>`;
+                            timerHtml = `<div class="timer-section justify-center flex-col"><span class="timer-display text-blue-600" id="timer-${uniqueId}">${formatTimer(0)}</span>${completionTimeHtml}</div>`;
                             actionButtonHtml = `<button class="btn btn-blue btn-action" data-item-id="${uniqueId}">Completar ${currentStep.name}</button>`;
                             break;
                     }
@@ -1254,8 +1237,7 @@
                     </div>
                     <div class="mt-auto"> ${timerHtml} ${actionButtonHtml} </div>
                 `;
-                 // After render, check if first step button needs enabling
-                 if (state.status === 'pending' && state.currentStepIndex === 0) {
+                 if (state.status === 'pending' && state.currentStepIndex > 0) {
                      const btn = itemCard.querySelector('.btn-action');
                      if (btn) btn.disabled = false;
                  }
