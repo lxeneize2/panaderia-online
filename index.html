@@ -259,7 +259,12 @@
         });
 
         loginForm.addEventListener('submit', e => { e.preventDefault(); loginError.classList.add('hidden'); const email = loginForm['email-address'].value; const password = loginForm['password'].value; auth.signInWithEmailAndPassword(email, password).catch(error => { console.error("Error de login:", error); loginError.textContent = "Email o contraseña incorrectos."; loginError.classList.remove('hidden'); }); });
-        logoutBtn.addEventListener('click', () => { auth.signOut(); });
+        logoutBtn.addEventListener('click', () => {
+            Object.values(timers).forEach(clearInterval); 
+            timers = {};
+            productionState = {};
+            auth.signOut(); 
+        });
 
         let productionState = {}; 
         let timers = {}; 
@@ -1015,7 +1020,6 @@
                          });
                      
                      await batch.commit();
-                     console.log(`Order ${orderId} marked as delivered and moved.`);
                  } catch (error) {
                      console.error("Error marking order as delivered:", error);
                      alert("Hubo un error al marcar el pedido como entregado.");
