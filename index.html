@@ -79,7 +79,7 @@
         .items-grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
         .recipe-step-input-group { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
         .recipe-step-input-group input { flex-grow: 1; }
-        .recipe-step-input-group input[type="number"] { flex-grow: 0; width: 80px; }
+        .recipe-step-input-group input[type="number"] { flex-grow: 0; width: 70px; }
         .hour-btn {
             border: 1px solid #D1C4E9; background-color: #FAFAFA; color: #6D4C41;
             transition: all 0.2s ease-in-out; padding: 0.5rem;
@@ -298,7 +298,6 @@
                 navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.section === sectionId));
                 if(sectionId === 'historial') renderHistory();
                 if (sectionId === 'produccion') {
-                    initializeProductionState(); 
                     renderProductionBoard();
                 }
             }
@@ -307,12 +306,16 @@
             loading.classList.remove('hidden');
 
             let materialsLoaded = false, recipesLoaded = false, ordersLoaded = false;
+            let isInitialLoadComplete = false; 
             
             const checkAllLoaded = () => {
                 if (materialsLoaded && recipesLoaded && ordersLoaded) {
+                    initializeProductionState(); 
                     renderAll();
-                    initializeProductionState();
-                    renderProductionBoard(); 
+                    if (!isInitialLoadComplete) {
+                        renderProductionBoard(); 
+                        isInitialLoadComplete = true;
+                    }
                     loading.classList.add('hidden'); 
                 }
             };
@@ -360,7 +363,6 @@
                 renderAgenda(); 
                  const productionSection = document.getElementById('section-produccion');
                  if (productionSection && !productionSection.classList.contains('hidden')) {
-                     initializeProductionState(); 
                     renderProductionBoard();
                  }
             };
@@ -491,9 +493,14 @@
              function addProductionStepInput(step = { name: '', duration: 0 }) {
                  const stepDiv = document.createElement('div');
                  stepDiv.className = 'recipe-step-input-group';
+                 const hours = Math.floor(step.duration / 60);
+                 const minutes = step.duration % 60;
                  stepDiv.innerHTML = `
-                     <input type="text" class="step-name" placeholder="Nombre del paso" value="${step.name || ''}" required>
-                     <input type="number" class="step-duration" placeholder="Minutos" value="${step.duration || 0}" min="0">
+                     <input type="text" class="step-name" placeholder="Nombre del paso" value="${step.name || ''}">
+                     <input type="number" class="step-hours" placeholder="Hs" value="${hours}" min="0">
+                     <span class="text-stone-500 text-sm">hs</span>
+                     <input type="number" class="step-minutes" placeholder="Min" value="${minutes}" min="0" max="59">
+                     <span class="text-stone-500 text-sm">min</span>
                      <button type="button" class="remove-step-btn btn btn-danger btn-sm w-auto">X</button>
                  `;
                  stepsContainer.appendChild(stepDiv);
@@ -564,9 +571,8 @@
 
             recipeModal.querySelector('form').addEventListener('submit', async e => {
                 e.preventDefault();
-                console.log("Recipe form submitted."); 
                 const id = recipeModal.dataset.editingId;
-                console.log("Recipe ID:", id || "(New Recipe)"); 
+
                 const name = e.target.querySelector('#recipe-name').value;
                 const salePrice = parseFloat(e.target.querySelector('#recipe-sale-price').value);
                 const cookingTime = parseInt(e.target.querySelector('#recipe-cooking-time').value) || 0;
@@ -581,24 +587,34 @@
                 })).filter(ing => ing.materialId && !isNaN(ing.grams) && ing.grams > 0); 
 
                 const productionSteps = [];
+                let hasEmptyStepName = false;
                 stepsContainer.querySelectorAll('.recipe-step-input-group').forEach(stepGroup => {
                     const stepName = stepGroup.querySelector('.step-name').value.trim();
-                    const stepDuration = parseInt(stepGroup.querySelector('.step-duration').value); 
+                    const stepHours = parseInt(stepGroup.querySelector('.step-hours').value) || 0;
+                    const stepMinutes = parseInt(stepGroup.querySelector('.step-minutes').value) || 0;
+                    if (!stepName) hasEmptyStepName = true;
+                    
                     if (stepName) { 
-                        productionSteps.push({ name: stepName, duration: !isNaN(stepDuration) ? stepDuration : 0 }); 
+                        productionSteps.push({ name: stepName, duration: (stepHours * 60) + stepMinutes }); 
                     }
                 });
-                console.log("Collected Ingredients:", ingredients);
-                console.log("Collected Steps:", productionSteps);
 
+                if (!name || !salePrice) {
+                    recipeTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'details'));
+                    recipeTabContents.forEach(c => c.classList.toggle('hidden', c.id !== 'tab-content-details'));
+                    alert('Por favor, completa los campos obligatorios "Nombre" y "Precio Venta" en la pestaña "Detalles".');
+                    return;
+                }
                 if (ingredients.length === 0) {
-                     console.log("Validation failed: No ingredients.");
-                     alert('Debe agregar al menos un ingrediente.');
+                     recipeTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'details'));
+                     recipeTabContents.forEach(c => c.classList.toggle('hidden', c.id !== 'tab-content-details'));
+                     alert('Debe agregar al menos un ingrediente en la pestaña "Detalles".');
                      return;
                 }
-                if (productionSteps.length === 0) {
-                     console.log("Validation failed: No production steps.");
-                     alert('Debe agregar al menos un paso de producción.');
+                if (productionSteps.length === 0 || hasEmptyStepName) {
+                     recipeTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'steps'));
+                     recipeTabContents.forEach(c => c.classList.toggle('hidden', c.id !== 'tab-content-steps'));
+                     alert('Debes añadir al menos un paso de producción y todos los pasos deben tener un nombre.');
                      return;
                 }
 
@@ -607,22 +623,14 @@
                     steps: productionSteps, 
                     isAffected: false 
                 };
-                console.log("Recipe Data to Save:", recipeData);
 
                 try {
-                    console.log("Attempting Firestore operation...");
                     if (id) { 
-                        console.log("Updating recipe:", id);
                         await recipesCollection.doc(id).update(recipeData);
-                        console.log("Update successful.");
                     } else { 
-                         console.log("Adding new recipe...");
                         await recipesCollection.add(recipeData);
-                         console.log("Add successful.");
                     }
-                    console.log("Closing modal...");
                     closeModal(recipeModal);
-                    console.log("Modal closed.");
                 } catch (error) { 
                     console.error("Error saving recipe:", error); 
                     alert("Error al guardar la receta: " + error.message); 
@@ -758,9 +766,9 @@
 
             
             function initializeProductionState() {
-                 productionState = {};
-                 Object.values(timers).forEach(clearInterval);
-                 timers = {}; 
+                 const newProductionState = {};
+                 const newTimers = {};
+                 
                  orders.forEach(order => { 
                     let itemCounter = 0;
                     (order.items || []).forEach(item => {
@@ -768,7 +776,15 @@
                         if (recipe) { 
                             for(let i=0; i < item.quantity; i++) {
                                 const uniqueId = `${order.id}-item-${itemCounter}`;
-                                productionState[uniqueId] = { currentStepIndex: 0, status: 'pending', timerId: null, remainingSeconds: 0, completionTime: null };
+                                
+                                if (productionState[uniqueId]) {
+                                    newProductionState[uniqueId] = productionState[uniqueId];
+                                    if (timers[uniqueId]) {
+                                        newTimers[uniqueId] = timers[uniqueId];
+                                    }
+                                } else {
+                                    newProductionState[uniqueId] = { currentStepIndex: 0, status: 'pending', timerId: null, remainingSeconds: 0, completionTime: null };
+                                }
                                 itemCounter++;
                             }
                         } else {
@@ -776,6 +792,15 @@
                         }
                     });
                 });
+                
+                Object.keys(timers).forEach(timerId => {
+                    if (!newTimers[timerId]) {
+                        clearInterval(timers[timerId]);
+                    }
+                });
+
+                productionState = newProductionState;
+                timers = newTimers;
             }
 
             function renderProductionBoard() {
@@ -815,6 +840,18 @@
                     productionBoard.appendChild(orderBlock);
                     checkOrderCompletionVisuals(order.id); 
                 });
+            }
+            
+            function formatTimer(totalSeconds) {
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = Math.floor(totalSeconds % 60);
+                
+                if (hours > 0) {
+                    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                } else {
+                    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                }
             }
 
              function createItemCard(recipeName, uniqueId) { 
@@ -865,7 +902,7 @@
                             if (currentStep.duration > 0) {
                                 timerHtml = `
                                     <div class="timer-section">
-                                        <span class="timer-display" id="timer-${uniqueId}">00:00</span>
+                                        <span class="timer-display" id="timer-${uniqueId}">${formatTimer(state.remainingSeconds)}</span>
                                         <button class="btn btn-sm btn-yellow btn-action" data-item-id="${uniqueId}">Saltar</button>
                                     </div>`;
                                 actionButtonHtml = ''; 
@@ -987,9 +1024,11 @@
                     state.remainingSeconds = currentStep.duration * 60;
                     
                     if (timers[uniqueId]) clearInterval(timers[uniqueId]);
+                    
+                    updateItemCard(uniqueId); // Initial render with formatted time
 
                     timers[uniqueId] = setInterval(() => {
-                        if (state.status !== 'in-progress') { 
+                        if (productionState[uniqueId]?.status !== 'in-progress') { 
                             clearInterval(timers[uniqueId]);
                             delete timers[uniqueId]; 
                             return;
@@ -998,9 +1037,7 @@
                         state.remainingSeconds--;
                         const timerDisplay = document.getElementById(`timer-${uniqueId}`);
                         if(timerDisplay) {
-                            const minutes = Math.floor(Math.max(0, state.remainingSeconds) / 60);
-                            const seconds = Math.floor(Math.max(0, state.remainingSeconds) % 60);
-                            timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                            timerDisplay.textContent = formatTimer(Math.max(0, state.remainingSeconds));
                         }
 
                         if (state.remainingSeconds < 0) { 
@@ -1094,17 +1131,17 @@
                         case 'pending':
                             const isFirstStepForRender = state.currentStepIndex === 0;
                              let isDisabled = !isFirstStepForRender; 
-                             if (!isFirstStepForRender) { isDisabled = false; }
+                             if (!isFirstStepForRender) { 
+                                isDisabled = false; 
+                             }
 
                             actionButtonHtml = `<button class="btn btn-gray btn-action" data-item-id="${uniqueId}" ${isDisabled ? 'disabled' : ''}>Comenzar ${currentStep.name}</button>`;
                             break;
                         case 'in-progress':
                             if (currentStep.duration > 0) {
-                                const minutes = Math.floor(Math.max(0, state.remainingSeconds) / 60);
-                                const seconds = Math.floor(Math.max(0, state.remainingSeconds) % 60);
                                 timerHtml = `
                                     <div class="timer-section">
-                                        <span class="timer-display" id="timer-${uniqueId}">${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}</span>
+                                        <span class="timer-display" id="timer-${uniqueId}">${formatTimer(state.remainingSeconds)}</span>
                                         <button class="btn btn-sm btn-yellow btn-action" data-item-id="${uniqueId}">Saltar</button>
                                     </div>`;
                                 actionButtonHtml = ''; 
