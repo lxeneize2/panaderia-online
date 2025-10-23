@@ -616,7 +616,7 @@
                     }
                 });
 
-                if (!name || !salePrice) {
+                if (!name || isNaN(salePrice) || salePrice <= 0) {
                     setActiveTab('details');
                     alert('Por favor, completa los campos obligatorios "Nombre" y "Precio Venta" en la pestaña "Detalles".');
                     e.target.querySelector('#recipe-name').focus();
