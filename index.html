@@ -8,11 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Scripts de Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-storage-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #FDFBF8; }
         .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); padding: 1.5rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; }
@@ -24,9 +23,9 @@
         .btn-secondary:hover { background-color: #8D6E63; }
         .btn-danger { background-color: #E57373; color: white; }
         .btn-danger:hover { background-color: #D32F2F; }
-        input, select, textarea { border-radius: 0.5rem; border: 1px solid #D1C4E9; padding: 0.5rem; width: 100%; }
+        input, select { border-radius: 0.5rem; border: 1px solid #D1C4E9; padding: 0.5rem; width: 100%; }
         input[type="radio"] { width: auto; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #6D4C41; box-shadow: 0 0 0 2px #D1C4E9; }
+        input:focus, select:focus { outline: none; border-color: #6D4C41; box-shadow: 0 0 0 2px #D1C4E9; }
         .modal-container.hidden { display: none; }
         .modal-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 1rem; }
         .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); }
@@ -39,21 +38,21 @@
         
         .wood-texture {
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><g fill="%236D4C41" fill-opacity="0.1"><path d="M0 0h40v40H0zM40 40h40v40H40z"/></g></svg>');
-            background-color: #A1887F;
+            background-color: #A1887F; 
         }
         
         .fire-texture {
-            background-color: #ff8c00;
+            background-color: #ff8c00; 
             background-image: linear-gradient(45deg, #ffA500 25%, transparent 25%), linear-gradient(-45deg, #ffA500 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ffA500 75%), linear-gradient(-45deg, transparent 75%, #ffA500 75%);
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
 
         .material-name-cell {
-            word-break: break-word;
+            word-break: break-word; 
         }
         .actions-cell .btn {
-            width: 100%;
+            width: 100%; 
         }
         .hour-btn {
             border: 1px solid #D1C4E9;
@@ -111,7 +110,8 @@
                     <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
                         <div class="lg:col-span-3 space-y-6"><div class="card !overflow-visible"><div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"><h2 class="text-2xl font-bold text-stone-700">Pedidos Activos</h2><button id="add-order-btn" class="btn btn-primary w-full sm:w-auto">Crear Nuevo Pedido</button></div><div id="orders-container" class="space-y-4"><p class="text-center text-stone-500">Aún no hay pedidos activos.</p></div></div></div>
                         <div class="lg:col-span-2 space-y-6">
-                            <div id="agenda-container" class="card !overflow-visible"></div>
+                            <div id="agenda-container" class="card !overflow-visible">
+                            </div>
                             <div class="card !overflow-visible wood-texture text-white"><h3 class="text-xl font-bold mb-2">Costo Total de Producción</h3><p id="total-production-cost" class="text-4xl font-bold">$0.00</p></div>
                             <div class="card !overflow-visible bg-green-600 text-white"><h3 class="text-xl font-bold mb-2">Total a Recaudar</h3><p id="total-revenue" class="text-4xl font-bold">$0.00</p></div>
                             <div class="card !overflow-visible fire-texture text-white"><h3 class="text-xl font-bold mb-2">Tiempo Total de Cocción</h3><p id="total-cooking-time" class="text-4xl font-bold">0 min</p></div>
@@ -135,43 +135,9 @@
         </div>
     </div>
     
-    <!-- Modals -->
     <div id="material-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 id="material-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3><form id="material-form"><div class="space-y-4"><div><label for="material-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="material-name" required></div><div><label for="material-weight" class="block text-sm font-medium text-stone-600 mb-1">Peso (gr)</label><input type="number" id="material-weight" required></div><div><label for="material-price" class="block text-sm font-medium text-stone-600 mb-1">Precio ($)</label><input type="number" step="0.01" id="material-price" required></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
-    
     <div id="recipe-modal" class="modal-container hidden">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content">
-            <h3 id="recipe-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3>
-            <form id="recipe-form">
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div><label for="recipe-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="recipe-name" required></div>
-                        <div><label for="recipe-sale-price" class="block text-sm font-medium text-stone-600 mb-1">Precio Venta ($)</label><input type="number" step="0.01" id="recipe-sale-price" required></div>
-                    </div>
-                    <div><label for="recipe-cooking-time" class="block text-sm font-medium text-stone-600 mb-1">Tiempo Cocción (min)</label><input type="number" id="recipe-cooking-time"></div>
-                    <div><label for="recipe-description" class="block text-sm font-medium text-stone-600 mb-1">Descripción</label><textarea id="recipe-description" rows="3"></textarea></div>
-                    <div>
-                        <label for="recipe-image-urls" class="block text-sm font-medium text-stone-600 mb-1">URLs de Imágenes</label>
-                        <textarea id="recipe-image-urls" rows="4" placeholder="Pega cada URL de imagen en una nueva línea..."></textarea>
-                    </div>
-                    <div class="relative">
-                        <label for="ingredient-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Material</label>
-                        <input type="text" id="ingredient-search">
-                        <div id="ingredient-search-results" class="absolute bg-white border z-10 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div>
-                    </div>
-                    <div>
-                        <h4 class="text-md font-medium text-stone-600 mb-2">Ingredientes</h4>
-                        <div id="ingredients-container" class="space-y-2 border p-2 rounded-md min-h-[50px]"></div>
-                    </div>
-                </div>
-                <div class="flex justify-end gap-4 mt-6">
-                    <button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+        <div class="modal-backdrop"></div><div class="modal-content"><h3 id="recipe-modal-title" class="text-xl font-bold text-stone-700 mb-4"></h3><form id="recipe-form"><div class="space-y-4"><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label for="recipe-name" class="block text-sm font-medium text-stone-600 mb-1">Nombre</label><input type="text" id="recipe-name" required></div><div><label for="recipe-sale-price" class="block text-sm font-medium text-stone-600 mb-1">Precio Venta ($)</label><input type="number" step="0.01" id="recipe-sale-price" required></div></div><div><label for="recipe-cooking-time" class="block text-sm font-medium text-stone-600 mb-1">Tiempo Cocción (min)</label><input type="number" id="recipe-cooking-time"></div><div><label for="recipe-image-url" class="block text-sm font-medium text-stone-600 mb-1">URL Imagen</label><input type="text" id="recipe-image-url"></div><div class="relative"><label for="ingredient-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Material</label><input type="text" id="ingredient-search"><div id="ingredient-search-results" class="absolute bg-white border z-10 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div></div><div><h4 class="text-md font-medium text-stone-600 mb-2">Ingredientes</h4><div id="ingredients-container" class="space-y-2 border p-2 rounded-md min-h-[50px]"></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
     <div id="new-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Crear Pedido</h3><form id="new-order-form"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="customer-name" required></div><div><label for="customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="customer-phone"></div></div><div><label for="delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="delivery-date"></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Horarios de Entrega</label><div id="new-order-hours-grid" class="grid grid-cols-6 gap-2"></div></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label><div class="flex items-center gap-x-4"><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin asignar" class="mr-1" checked>Sin asignar</label><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Sin cortar" class="mr-1">Sin cortar</label><label class="flex items-center text-sm"><input type="radio" name="slicing" value="Cortado" class="mr-1">Cortado</label></div></div><div class="relative"><label for="order-recipe-search" class="block text-sm font-medium text-stone-600 mb-1">Añadir Producto</label><input type="text" id="order-recipe-search"><div id="order-recipe-search-results" class="absolute bg-white border z-20 w-full rounded-md shadow-lg max-h-40 overflow-y-auto mt-1"></div></div><div><h4 class="text-md font-medium text-stone-600 mb-2">Productos</h4><div id="order-selected-recipes" class="space-y-2 border p-3 rounded-md min-h-[60px] max-h-48 overflow-y-auto"></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Crear</button></div></form></div></div>
     <div id="order-details-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Materiales del Pedido</h3><div id="order-details-content"></div><div class="flex justify-end mt-6"><button type="button" class="btn-cancel-modal btn btn-primary">Cerrar</button></div></div></div>
     <div id="edit-order-modal" class="modal-container hidden"><div class="modal-backdrop"></div><div class="modal-content"><h3 class="text-xl font-bold text-stone-700 mb-4">Editar Pedido</h3><form id="edit-order-form"><input type="hidden" id="edit-order-id"><div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="edit-customer-name" class="block text-sm font-medium text-stone-600 mb-1">Cliente</label><input type="text" id="edit-customer-name" required></div><div><label for="edit-customer-phone" class="block text-sm font-medium text-stone-600 mb-1">Teléfono</label><input type="tel" id="edit-customer-phone"></div></div><div><label for="edit-delivery-date" class="block text-sm font-medium text-stone-600 mb-1">Fecha Entrega</label><input type="date" id="edit-delivery-date"></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Horarios de Entrega</label><div id="edit-order-hours-grid" class="grid grid-cols-6 gap-2"></div></div><div><label class="block text-sm font-medium text-stone-600 mb-1">Corte del Pan</label><div class="flex items-center gap-x-4"><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Sin asignar" class="mr-1">Sin asignar</label><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Sin cortar" class="mr-1">Sin cortar</label><label class="flex items-center text-sm"><input type="radio" name="edit-slicing" value="Cortado" class="mr-1">Cortado</label></div></div></div><div class="flex justify-end gap-4 mt-6"><button type="button" class="btn-cancel-modal btn bg-stone-200 text-stone-700">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></div></div>
@@ -256,6 +222,7 @@
 
             const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount || 0);
             const formatMinutes = (mins) => { if (!mins || mins < 1) return '0 min'; const h = Math.floor(mins / 60); const m = mins % 60; return `${h > 0 ? h + 'h ' : ''}${m}min`; };
+            
             const formatDeliveryDate = (dateString) => {
                 if (!dateString) return '';
                 const parts = dateString.split('-');
@@ -282,26 +249,67 @@
                 ordersContainer.innerHTML = ''; if (orders.length === 0) { ordersContainer.innerHTML = `<p class="text-center text-stone-500">Aún no hay pedidos activos.</p>`; return; }
                 orders.forEach(order => {
                     const orderCard = document.createElement('div'); orderCard.className = 'card !p-0 !mb-4 order-card'; orderCard.id = `order-${order.id}`; let totalSalePrice = 0; let totalCookingTime = 0;
-                    const itemsHtml = (order.items || []).map(item => { const recipe = recipes.find(r => r.id === item.recipeId); const salePrice = (recipe ? recipe.salePrice : 0) * item.quantity; totalSalePrice += salePrice; totalCookingTime += (recipe ? recipe.cookingTime || 0 : 0) * item.quantity; return `<li class="flex justify-between items-center py-1"><span class="text-stone-700">${item.quantity} x ${recipe ? recipe.name : 'Receta eliminada'}</span><span class="text-sm text-stone-800 font-medium">${formatCurrency(salePrice)}</span></li>`; }).join('');
-                    const deliveryDateHtml = order.deliveryDate ? `<p class="text-sm text-yellow-800 bg-yellow-100 px-2 py-1 rounded-full">${formatDeliveryDate(order.deliveryDate)}</p>` : '';
-                    const slicingHtml = (order.slicingOption && order.slicingOption !== 'Sin asignar') ? `<p class="text-sm text-purple-800 bg-purple-100 px-2 py-1 rounded-full">${order.slicingOption}</p>` : '';
                     
-                    let timeSlotHtml = '';
+                    const slicingText = (order.slicingOption && order.slicingOption !== 'Sin asignar') ? `<span class="text-xs text-purple-800 bg-purple-100 px-2 rounded-full ml-2">${order.slicingOption}</span>` : '';
+
+                    const itemsHtml = (order.items || []).map((item, index) => { 
+                        const recipe = recipes.find(r => r.id === item.recipeId); 
+                        const salePrice = (recipe ? recipe.salePrice : 0) * item.quantity; 
+                        totalSalePrice += salePrice; 
+                        totalCookingTime += (recipe ? recipe.cookingTime || 0 : 0) * item.quantity; 
+                        const materialDivId = `item-materials-${order.id}-${index}`;
+
+                        return `
+                        <li class="flex flex-col">
+                            <div class="flex justify-between items-center py-1">
+                                <div>
+                                    <span class="text-stone-700">${item.quantity} x ${recipe ? recipe.name : 'Receta eliminada'}</span>
+                                    ${slicingText}
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-stone-800 font-medium">${formatCurrency(salePrice)}</span>
+                                    <button class="btn bg-blue-100 text-blue-800 hover:bg-blue-200 !p-1.5" title="Ver materiales" data-action="toggle-item-materials" data-recipe-id="${item.recipeId}" data-quantity="${item.quantity}" data-target-id="${materialDivId}">
+                                        <svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="${materialDivId}" class="item-materials hidden p-2 pl-4 border-t border-gray-100 text-sm">
+                            </div>
+                        </li>`; 
+                    }).join('');
+                    
+                    let timeText = '';
                     if (order.deliveryHours && order.deliveryHours.length > 0) {
-                        const sortedHours = order.deliveryHours.sort((a, b) => a - b);
+                        const sortedHours = [...order.deliveryHours].sort((a, b) => a - b); 
                         const minHour = sortedHours[0];
                         const maxHour = sortedHours[sortedHours.length - 1];
-                        let timeText = '';
-                        if (minHour === maxHour) {
-                            timeText = `a las ${minHour}hs`;
-                        } else {
-                            timeText = `de ${minHour}hs a ${maxHour}hs`;
-                        }
-                        timeSlotHtml = `<p class="text-sm text-cyan-800 bg-cyan-100 px-2 py-1 rounded-full">${timeText}</p>`;
+                        timeText = (minHour === maxHour) ? ` a las ${minHour}hs` : ` de ${minHour}hs a ${maxHour}hs`;
                     }
 
+                    const dateText = order.deliveryDate ? formatDeliveryDate(order.deliveryDate) : '';
+                    const dateTimeFull = (dateText || timeText) ? `${dateText}${timeText}` : '';
+                    const dateTimeHtml = dateTimeFull ? `<p class="text-sm text-yellow-800 bg-yellow-100 px-2 py-1 rounded-full">${dateTimeFull}</p>` : '';
+                    
                     const phoneHtml = order.customerPhone ? `<p class="text-sm text-stone-500">Tel: ${order.customerPhone}</p>` : '';
-                    orderCard.innerHTML = `<div class="p-4 bg-stone-50 rounded-t-lg border-b"><div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"><div><h4 class="font-bold text-stone-800">${order.customerName}</h4>${phoneHtml}</div><div class="flex items-center gap-2 flex-wrap justify-end">${slicingHtml}${timeSlotHtml}${deliveryDateHtml}<button class="btn text-xs bg-green-100 text-green-800 hover:bg-green-200" data-action="complete-order" data-id="${order.id}">Completar</button><button class="btn text-xs bg-yellow-100 text-yellow-800 hover:bg-yellow-200" data-action="edit-order" data-id="${order.id}">Editar</button><button class="btn text-xs bg-blue-100 text-blue-800 hover:bg-blue-200" data-action="toggle-materials" data-id="${order.id}"><svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><button class="btn text-xs btn-danger" data-action="delete-order" data-id="${order.id}">Eliminar</button></div></div></div><ul class="p-4 space-y-1">${itemsHtml}</ul><div class="p-4 bg-stone-50 rounded-b-lg border-t flex justify-between items-center"><span class="font-bold text-blue-800">Cocción: ${formatMinutes(totalCookingTime)}</span><span class="font-bold text-stone-800">Total Venta: ${formatCurrency(totalSalePrice)}</span></div><div class="order-materials hidden p-4 border-t text-sm"></div>`;
+                    
+                    orderCard.innerHTML = `<div class="p-4 bg-stone-50 rounded-t-lg border-b"><div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"><div><h4 class="font-bold text-stone-800">${order.customerName}</h4>${phoneHtml}</div><div class="flex items-center gap-2 flex-wrap justify-end">${dateTimeHtml}
+                        <button class="btn bg-green-100 text-green-800 hover:bg-green-200 !p-2" title="Completar" data-action="complete-order" data-id="${order.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </button>
+                        <button class="btn bg-yellow-100 text-yellow-800 hover:bg-yellow-200 !p-2" title="Editar" data-action="edit-order" data-id="${order.id}">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                        <button class="btn bg-red-100 text-red-800 hover:bg-red-200 !p-2" title="Eliminar" data-action="delete-order" data-id="${order.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div></div></div><ul class="p-4 space-y-1">${itemsHtml}</ul><div class="p-4 bg-stone-50 rounded-b-lg border-t flex justify-between items-center"><span class="font-bold text-blue-800">Cocción: ${formatMinutes(totalCookingTime)}</span><span class="font-bold text-stone-800">Total Venta: ${formatCurrency(totalSalePrice)}</span></div>`;
                     ordersContainer.appendChild(orderCard);
                 });
             };
@@ -334,7 +342,7 @@
                 totalRevenueEl.textContent = formatCurrency(totalRevenue);
                 totalCookingTimeEl.textContent = formatMinutes(totalCookTime);
             };
-            const renderAgenda = () => {
+             const renderAgenda = () => {
                 const agendaContainer = document.getElementById('agenda-container');
                 if (!agendaContainer) return;
 
@@ -353,17 +361,11 @@
 
                 const toYYYYMMDD = (date) => date.toISOString().split('T')[0];
                 const weekDateStrings = weekDates.map(toYYYYMMDD);
-                
+
                 const agendaData = {};
-                const futureOrders = orders.filter(order => {
-                    if (!order.deliveryDate) return false;
-                    const orderDate = new Date(order.deliveryDate + 'T00:00:00');
-                    return orderDate >= today;
-                });
+                const thisWeekOrders = orders.filter(order => order.deliveryDate && weekDateStrings.includes(order.deliveryDate));
                 
-                const ordersForAgenda = futureOrders.filter(order => weekDateStrings.includes(order.deliveryDate));
-                
-                ordersForAgenda.forEach(order => {
+                thisWeekOrders.forEach(order => {
                     const date = order.deliveryDate;
                     if (!agendaData[date]) agendaData[date] = {};
                     (order.items || []).forEach(item => {
@@ -373,14 +375,14 @@
                 });
 
                 const activeRecipeIds = new Set();
-                ordersForAgenda.forEach(o => o.items.forEach(i => activeRecipeIds.add(i.recipeId)));
+                thisWeekOrders.forEach(o => o.items.forEach(i => activeRecipeIds.add(i.recipeId)));
                 const activeRecipes = recipes.filter(r => activeRecipeIds.has(r.id)).sort((a, b) => a.name.localeCompare(b.name));
 
                 if (activeRecipes.length === 0) {
-                    agendaContainer.innerHTML = `<h3 class="text-xl font-bold text-stone-700 mb-4">Próximos 7 Días</h3><p class="text-stone-500 text-center">No hay entregas programadas.</p>`;
+                    agendaContainer.innerHTML = `<h3 class="text-xl font-bold text-stone-700 mb-4">Próximos 7 Días</h3><p class="text-stone-500 text-center">No hay entregas programadas para esta semana.</p>`;
                     return;
                 }
-                
+
                 const headerHtml = `<tr><th class="px-4 py-2 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Receta</th>${dayNames.map(day => `<th class="px-2 py-2 text-center text-xs font-medium text-stone-500 uppercase tracking-wider">${day}</th>`).join('')}</tr>`;
 
                 const bodyHtml = activeRecipes.map(recipe => {
@@ -402,127 +404,41 @@
             document.getElementById('add-material-btn').addEventListener('click', () => { const form = materialModal.querySelector('form'); form.reset(); materialModal.dataset.editingId = ''; materialModal.querySelector('h3').textContent = 'Nuevo Material'; openModal(materialModal); });
             materialsTable.addEventListener('click', e => { const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; if (action === 'edit-material') { const material = materials.find(m => m.id === id); if (!material) return; const form = materialModal.querySelector('form'); form.querySelector('#material-name').value = material.name; form.querySelector('#material-weight').value = material.weight; form.querySelector('#material-price').value = material.price; materialModal.dataset.editingId = id; materialModal.querySelector('h3').textContent = 'Editar Material'; openModal(materialModal); } else if (action === 'delete-material') { if (!confirm('¿Seguro?')) return; const batch = db.batch(); recipes.forEach(recipe => { if ((recipe.ingredients || []).some(ing => ing.materialId === id)) { batch.update(recipesCollection.doc(recipe.id), { isAffected: true }); } }); batch.commit().then(() => { materialsCollection.doc(id).delete(); }); } });
             materialModal.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); const id = materialModal.dataset.editingId; const name = e.target.querySelector('#material-name').value; const weight = parseFloat(e.target.querySelector('#material-weight').value); const price = parseFloat(e.target.querySelector('#material-price').value); const materialData = { name, weight, price }; try { if (id) { await materialsCollection.doc(id).set(materialData, { merge: true }); } else { await materialsCollection.add(materialData); } closeModal(materialModal); } catch (error) { console.error(error); } });
-            
-            document.getElementById('add-recipe-btn').addEventListener('click', () => {
-                const form = recipeModal.querySelector('form');
-                form.reset();
-                recipeModal.dataset.editingId = '';
-                recipeModal.querySelector('h3').textContent = 'Nueva Receta';
-                form.querySelector('#ingredients-container').innerHTML = '';
-                openModal(recipeModal);
-            });
-
-            recipesList.addEventListener('click', e => { 
-                const button = e.target.closest('button'); 
-                if (!button) return; 
-                const action = button.dataset.action; 
-                const id = button.dataset.id; 
-                const recipe = recipes.find(r => r.id === id); 
-                if (!recipe) return; 
-
-                if (action === 'edit-recipe') { 
-                    const form = recipeModal.querySelector('form'); 
-                    form.reset(); 
-                    form.querySelector('#recipe-name').value = recipe.name; 
-                    form.querySelector('#recipe-sale-price').value = recipe.salePrice; 
-                    form.querySelector('#recipe-cooking-time').value = recipe.cookingTime || ''; 
-                    form.querySelector('#recipe-description').value = recipe.description || '';
-                    form.querySelector('#recipe-image-urls').value = (recipe.imageUrls || []).join('\n');
-                    recipeModal.dataset.editingId = id; 
-                    recipeModal.querySelector('h3').textContent = 'Editar Receta'; 
-                    const container = form.querySelector('#ingredients-container'); 
-                    container.innerHTML = ''; 
-                    (recipe.ingredients || []).forEach(ing => { 
-                        const material = materials.find(m => m.id === ing.materialId); 
-                        if (material) addIngredientToRecipeForm(material, ing.grams, container); 
-                    }); 
-                    openModal(recipeModal); 
-                } else if (action === 'delete-recipe') { 
-                    if (!confirm('¿Seguro?')) return; 
-                    const batch = db.batch();
-                    orders.forEach(order => { 
-                        const newItems = (order.items || []).filter(item => item.recipeId !== id); 
-                        if (newItems.length < (order.items || []).length) { 
-                            if (newItems.length === 0) { 
-                                batch.delete(ordersCollection.doc(order.id)); 
-                            } else { 
-                                batch.update(ordersCollection.doc(order.id), { items: newItems }); 
-                            } 
-                        } 
-                    }); 
-                    batch.commit().then(() => { recipesCollection.doc(id).delete(); });
-                } 
-            });
-
-            recipeModal.querySelector('form').addEventListener('submit', async e => {
-                e.preventDefault();
-                const id = recipeModal.dataset.editingId;
-                const name = e.target.querySelector('#recipe-name').value;
-                const salePrice = parseFloat(e.target.querySelector('#recipe-sale-price').value);
-                const cookingTime = parseInt(e.target.querySelector('#recipe-cooking-time').value) || 0;
-                const description = e.target.querySelector('#recipe-description').value;
-                const imageUrlsRaw = e.target.querySelector('#recipe-image-urls').value;
-                const imageUrls = imageUrlsRaw.split('\n').map(url => url.trim()).filter(url => url.length > 0);
-
-                const ingredientRows = e.target.querySelectorAll('.ingredient-row');
-                const ingredients = Array.from(ingredientRows).map(row => ({ materialId: row.dataset.materialId, grams: parseFloat(row.querySelector('.ingredient-grams').value) })).filter(ing => ing.materialId && ing.grams > 0);
-                
-                if (ingredients.length === 0) {
-                    alert('Debe agregar al menos un ingrediente.');
-                    return;
-                }
-
-                const recipeData = { 
-                    name, 
-                    salePrice, 
-                    cookingTime, 
-                    description, 
-                    imageUrls,
-                    ingredients, 
-                    isAffected: false 
-                };
-
-                try {
-                    if (id) {
-                        await recipesCollection.doc(id).set(recipeData, { merge: true });
-                    } else {
-                        await recipesCollection.add(recipeData);
-                    }
-                    closeModal(recipeModal);
-                } catch (error) {
-                    console.error("Error saving recipe:", error);
-                    alert("Error al guardar la receta.");
-                }
-            });
-            
-            const ingredientSearchInput = document.getElementById('ingredient-search'); 
-            const ingredientSearchResults = document.getElementById('ingredient-search-results');
+            document.getElementById('add-recipe-btn').addEventListener('click', () => { const form = recipeModal.querySelector('form'); form.reset(); recipeModal.dataset.editingId = ''; recipeModal.querySelector('h3').textContent = 'Nueva Receta'; form.querySelector('#ingredients-container').innerHTML = ''; openModal(recipeModal); });
+            recipesList.addEventListener('click', e => { const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; const recipe = recipes.find(r => r.id === id); if (!recipe) return; if (action === 'edit-recipe') { const form = recipeModal.querySelector('form'); form.reset(); form.querySelector('#recipe-name').value = recipe.name; form.querySelector('#recipe-sale-price').value = recipe.salePrice; form.querySelector('#recipe-image-url').value = recipe.imageUrl || ''; form.querySelector('#recipe-cooking-time').value = recipe.cookingTime || ''; const container = form.querySelector('#ingredients-container'); container.innerHTML = ''; (recipe.ingredients || []).forEach(ing => { const material = materials.find(m => m.id === ing.materialId); if (material) addIngredientToRecipeForm(material, ing.grams, container); }); recipeModal.dataset.editingId = id; recipeModal.querySelector('h3').textContent = 'Editar Receta'; openModal(recipeModal); } else if (action === 'delete-recipe') { if (!confirm('¿Seguro?')) return; const batch = db.batch(); orders.forEach(order => { const newItems = (order.items || []).filter(item => item.recipeId !== id); if (newItems.length < (order.items || []).length) { if (newItems.length === 0) { batch.delete(ordersCollection.doc(order.id)); } else { batch.update(ordersCollection.doc(order.id), { items: newItems }); } } }); batch.commit().then(() => { recipesCollection.doc(id).delete(); }); } });
+            recipeModal.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); const id = recipeModal.dataset.editingId; const name = e.target.querySelector('#recipe-name').value; const salePrice = parseFloat(e.target.querySelector('#recipe-sale-price').value); const imageUrl = e.target.querySelector('#recipe-image-url').value; const cookingTime = parseInt(e.target.querySelector('#recipe-cooking-time').value) || 0; const ingredientRows = e.target.querySelectorAll('.ingredient-row'); const ingredients = Array.from(ingredientRows).map(row => ({ materialId: row.dataset.materialId, grams: parseFloat(row.querySelector('.ingredient-grams').value) })).filter(ing => ing.materialId && ing.grams); if (ingredients.length === 0) return alert('Debe agregar al menos un ingrediente.'); const recipeData = { name, salePrice, imageUrl, cookingTime, ingredients, isAffected: false }; try { if (id) { await recipesCollection.doc(id).set(recipeData, { merge: true }); } else { await recipesCollection.add(recipeData); } closeModal(recipeModal); } catch (error) { console.error(error); } });
+            const ingredientSearchInput = document.getElementById('ingredient-search'); const ingredientSearchResults = document.getElementById('ingredient-search-results');
             function displayIngredientResults(query = ''){ const lowerCaseQuery = query.toLowerCase(); ingredientSearchResults.innerHTML = ''; materials.filter(m => m.name.toLowerCase().includes(lowerCaseQuery)).forEach(material => { const item = document.createElement('div'); item.className = 'p-2 cursor-pointer hover:bg-stone-100'; item.textContent = material.name; item.onclick = () => { const grams = prompt(`¿Cuántos gramos de ${material.name}?`); if (grams && !isNaN(grams) && parseFloat(grams) > 0) { addIngredientToRecipeForm(material, parseFloat(grams), document.getElementById('ingredients-container')); } ingredientSearchInput.value = ''; ingredientSearchResults.innerHTML = ''; }; ingredientSearchResults.appendChild(item); }); }
             ingredientSearchInput.addEventListener('keyup', e => displayIngredientResults(e.target.value));
             ingredientSearchInput.addEventListener('focus', () => displayIngredientResults(ingredientSearchInput.value));
             document.addEventListener('click', (e) => { if (!ingredientSearchInput.contains(e.target) && !ingredientSearchResults.contains(e.target)) { ingredientSearchResults.innerHTML = ''; } });
             function addIngredientToRecipeForm(material, grams, container) { const row = document.createElement('div'); row.className = 'ingredient-row flex items-center justify-between p-2 bg-gray-50 rounded-md'; row.dataset.materialId = material.id; row.innerHTML = `<span>${material.name}</span><div class="flex items-center gap-2"><input type="number" value="${grams}" class="ingredient-grams w-24 text-right p-1 border rounded" required min="0.1" step="0.1"><span>gr</span><button type="button" class="text-red-500 font-bold">X</button></div>`; row.querySelector('button').onclick = () => row.remove(); container.appendChild(row); }
-            document.getElementById('add-order-btn').addEventListener('click', () => { newOrderModalEl.items = []; renderTempOrderItems(); newOrderModalEl.querySelector('form').reset(); openModal(newOrderModalEl); });
+            document.getElementById('add-order-btn').addEventListener('click', () => { 
+                newOrderModalEl.items = []; 
+                renderTempOrderItems(); 
+                newOrderModalEl.querySelector('form').reset(); 
+                generateHourGrid('new-order-hours-grid');
+                openModal(newOrderModalEl); 
+            });
             const orderRecipeSearchInput = document.getElementById('order-recipe-search'); const orderRecipeSearchResults = document.getElementById('order-recipe-search-results');
             function displayOrderRecipeResults(query = '') { const lowerCaseQuery = query.toLowerCase(); orderRecipeSearchResults.innerHTML = ''; const filteredRecipes = recipes.filter(r => r.name.toLowerCase().includes(lowerCaseQuery) && !newOrderModalEl.items.some(i => i.recipeId === r.id)); if (filteredRecipes.length === 0) { orderRecipeSearchResults.innerHTML = `<div class="p-2 text-stone-500">No hay más recetas.</div>`; } else { filteredRecipes.forEach(recipe => { const item = document.createElement('div'); item.className = 'p-2 cursor-pointer hover:bg-stone-100'; item.textContent = recipe.name; item.onclick = () => { newOrderModalEl.items.push({ recipeId: recipe.id, quantity: 1 }); renderTempOrderItems(); orderRecipeSearchInput.value = ''; orderRecipeSearchResults.innerHTML = ''; }; orderRecipeSearchResults.appendChild(item); }); } }
             orderRecipeSearchInput.addEventListener('keyup', e => displayOrderRecipeResults(e.target.value));
             orderRecipeSearchInput.addEventListener('focus', () => displayOrderRecipeResults(orderRecipeSearchInput.value));
             document.addEventListener('click', (e) => { if (!orderRecipeSearchInput.contains(e.target) && !orderRecipeSearchResults.contains(e.target)) { orderRecipeSearchResults.innerHTML = ''; } });
-            function renderTempOrderItems() { const container = document.getElementById('order-selected-recipes'); container.innerHTML = ''; if (newOrderModalEl.items.length === 0) { container.innerHTML = `<p class="text-stone-500 text-center py-4">Busca y agrega productos.</p>`; return; } newOrderModalEl.items.forEach((item, index) => { const recipe = recipes.find(r => r.id === item.recipeId); const div = document.createElement('div'); div.className = 'flex items-center justify-between p-2 bg-gray-50 rounded'; div.innerHTML = `<div class="flex items-center gap-2"><input type="number" min="1" value="${item.quantity}" class="w-16 p-1 border rounded order-item-quantity" data-index="${index}"><label>${recipe.name}</label></div><button type="button" class="text-red-500 font-bold order-item-remove" data-index="${index}">X</button>`; container.appendChild(div); }); }
+            function renderTempOrderItems() { const container = document.getElementById('order-selected-recipes'); container.innerHTML = ''; if (newOrderModalEl.items.length === 0) { container.innerHTML = `<p class="text-stone-500 text-center py-4">Busca y agrega productos.</p>`; return; } newOrderModalEl.items.forEach((item, index) => { const recipe = recipes.find(r => r.id === item.recipeId); const div = document.createElement('div'); div.className = 'flex items-center justify-between p-2 bg-gray-50 rounded'; div.innerHTML = `<div class="flex items-center gap-2"><input type="number" min="1" value="${item.quantity}" class="w-16 p-1 border rounded order-item-quantity" data-index="${index}"><label>${recipe ? recipe.name : 'Receta Eliminada'}</label></div><button type="button" class="text-red-500 font-bold order-item-remove" data-index="${index}">X</button></div>`; container.appendChild(div); }); }
             document.getElementById('order-selected-recipes').addEventListener('change', e => { if (e.target.classList.contains('order-item-quantity')) { const index = parseInt(e.target.dataset.index); const quantity = parseInt(e.target.value); if (quantity > 0) newOrderModalEl.items[index].quantity = quantity; } });
             document.getElementById('order-selected-recipes').addEventListener('click', e => { if (e.target.classList.contains('order-item-remove')) { const index = parseInt(e.target.dataset.index); newOrderModalEl.items.splice(index, 1); renderTempOrderItems(); } });
+            
             newOrderModalEl.querySelector('form').addEventListener('submit', async e => { 
                 e.preventDefault(); 
                 const customerName = e.target.querySelector('#customer-name').value; 
                 const customerPhone = e.target.querySelector('#customer-phone').value; 
                 const deliveryDate = e.target.querySelector('#delivery-date').value; 
                 const slicingOption = e.target.querySelector('input[name="slicing"]:checked').value; 
-                
-                const selectedHours = [];
+                const selectedHours = []; 
                 e.target.querySelectorAll('#new-order-hours-grid .hour-selected').forEach(btn => {
                     selectedHours.push(parseInt(btn.dataset.hour));
                 });
-
                 if (newOrderModalEl.items.length === 0) return alert('Debes seleccionar al menos un producto.'); 
                 try { 
                     await ordersCollection.add({ 
@@ -537,6 +453,7 @@
                     closeModal(newOrderModalEl); 
                 } catch (error) { console.error(error); } 
             });
+
             ordersContainer.addEventListener('click', async e => {
                 const button = e.target.closest('button'); if (!button) return; const action = button.dataset.action; const id = button.dataset.id; const order = orders.find(o => o.id === id); if (!order) return;
                 
@@ -555,28 +472,42 @@
                     
                     await batch.commit();
                 }
-                else if (action === 'toggle-materials') { const materialsEl = button.closest('.order-card').querySelector('.order-materials'); const isHidden = materialsEl.classList.contains('hidden'); if (isHidden) { const totalIngredients = {}; (order.items || []).forEach(item => { const recipe = recipes.find(r => r.id === item.recipeId); if (!recipe) return; (recipe.ingredients || []).forEach(ing => { const material = materials.find(m => m.id === ing.materialId); if (!material) return; if (!totalIngredients[material.name]) totalIngredients[material.name] = 0; totalIngredients[material.name] += ing.grams * item.quantity; }); }); materialsEl.innerHTML = `<h5 class="font-bold mb-2">Materiales para este pedido:</h5><ul class="space-y-1 list-disc list-inside">${Object.keys(totalIngredients).sort().map(name => `<li><strong>${name}:</strong> ${totalIngredients[name].toFixed(0)} gr</li>`).join('') || '<li>Sin materiales.</li>'}</ul>`; } materialsEl.classList.toggle('hidden'); button.querySelector('svg').classList.toggle('rotate-180'); }
+                else if (action === 'toggle-item-materials') {
+                    const targetId = button.dataset.targetId;
+                    const recipeId = button.dataset.recipeId;
+                    const quantity = parseInt(button.dataset.quantity);
+                    const recipe = recipes.find(r => r.id === recipeId);
+                    const materialsEl = document.getElementById(targetId);
+                    
+                    if (!materialsEl || !recipe) return;
+
+                    const isHidden = materialsEl.classList.contains('hidden');
+                    if (isHidden) {
+                        const totalIngredients = {};
+                        (recipe.ingredients || []).forEach(ing => {
+                            const material = materials.find(m => m.id === ing.materialId);
+                            if (!material) return;
+                            if (!totalIngredients[material.name]) totalIngredients[material.name] = 0;
+                            totalIngredients[material.name] += ing.grams * quantity;
+                        });
+                        materialsEl.innerHTML = `<ul class="space-y-1 list-disc list-inside">${Object.keys(totalIngredients).sort().map(name => `<li><strong>${name}:</strong> ${totalIngredients[name].toFixed(0)} gr</li>`).join('') || '<li>Sin materiales definidos.</li>'}</ul>`;
+                    }
+                    materialsEl.classList.toggle('hidden');
+                    button.querySelector('svg').classList.toggle('rotate-180');
+                }
                 else if (action === 'edit-order') { 
                     const form = editOrderModal.querySelector('form'); 
                     form.querySelector('#edit-order-id').value = order.id; 
                     form.querySelector('#edit-customer-name').value = order.customerName; 
                     form.querySelector('#edit-customer-phone').value = order.customerPhone; 
                     form.querySelector('#edit-delivery-date').value = order.deliveryDate; 
-                    
-                    const editHoursGrid = form.querySelector('#edit-order-hours-grid');
-                    editHoursGrid.querySelectorAll('.hour-btn').forEach(btn => btn.classList.remove('hour-selected'));
-                    if (order.deliveryHours) {
-                        order.deliveryHours.forEach(hour => {
-                            const btn = editHoursGrid.querySelector(`[data-hour="${hour}"]`);
-                            if (btn) btn.classList.add('hour-selected');
-                        });
-                    }
-
-                    const slicingValue = order.slicingOption || 'Sin asignar';
-                    form.querySelector(`input[name="edit-slicing"][value="${slicingValue}"]`).checked = true;
+                    generateHourGrid('edit-order-hours-grid', order.deliveryHours || []);
+                    const slicingValue = order.slicingOption || 'Sin asignar'; 
+                    form.querySelector(`input[name="edit-slicing"][value="${slicingValue}"]`).checked = true; 
                     openModal(editOrderModal); 
                 }
             });
+            
             editOrderModal.querySelector('form').addEventListener('submit', async e => { 
                 e.preventDefault(); 
                 const id = e.target.querySelector('#edit-order-id').value; 
@@ -584,12 +515,8 @@
                 const customerPhone = e.target.querySelector('#edit-customer-phone').value; 
                 const deliveryDate = e.target.querySelector('#edit-delivery-date').value; 
                 const slicingOption = e.target.querySelector('input[name="edit-slicing"]:checked').value;
-                
-                const selectedHours = [];
-                e.target.querySelectorAll('#edit-order-hours-grid .hour-selected').forEach(btn => {
-                    selectedHours.push(parseInt(btn.dataset.hour));
-                });
-
+                const selectedHours = []; 
+                e.target.querySelectorAll('#edit-order-hours-grid .hour-selected').forEach(btn => selectedHours.push(parseInt(btn.dataset.hour)));
                 try { 
                     await ordersCollection.doc(id).update({ customerName, customerPhone, deliveryDate, slicingOption, deliveryHours: selectedHours }); 
                     closeModal(editOrderModal); 
@@ -606,16 +533,12 @@
                         let totalSale = 0;
                         const itemsHtml = (order.items || []).map(item => { totalSale += (item.salePrice || 0) * item.quantity; return `<li class="text-sm">${item.quantity} x ${item.name || 'Receta eliminada'}</li>`; }).join('');
                         const slicingHtml = order.slicingOption ? `<p class="text-xs text-gray-500"><strong>Corte:</strong> ${order.slicingOption}</p>`: '';
-                        
                         let timeSlotHistoryHtml = '';
                         if (order.deliveryHours && order.deliveryHours.length > 0) {
-                            const sortedHours = order.deliveryHours.sort((a,b) => a-b);
-                            const minHour = sortedHours[0];
-                            const maxHour = sortedHours[sortedHours.length - 1];
+                            const sortedHours = [...order.deliveryHours].sort((a,b) => a-b); const minHour = sortedHours[0]; const maxHour = sortedHours[sortedHours.length - 1];
                             const timeText = minHour === maxHour ? `a las ${minHour}hs` : `de ${minHour}hs a ${maxHour}hs`;
                             timeSlotHistoryHtml = `<p class="text-xs text-gray-500"><strong>Horario:</strong> ${timeText}</p>`;
                         }
-
                         return `<div class="p-4 border rounded-lg mb-2"><div class="flex justify-between"><div><p class="font-bold">${order.customerName}</p><p class="text-xs text-gray-500">Completado: ${new Date(order.completedAt.toDate()).toLocaleString('es-AR')}</p>${slicingHtml}${timeSlotHistoryHtml}</div><div class="flex items-center gap-2"><p class="font-bold">${formatCurrency(totalSale)}</p><button class="btn text-xs bg-yellow-100 text-yellow-800 hover:bg-yellow-200" data-action="uncomplete-order" data-id="${order.id}">Cancelar</button></div></div><ul class="list-disc list-inside mt-2">${itemsHtml}</ul></div>`;
                     }).join('');
                 } catch (error) { console.error("Error al cargar historial:", error); historyContent.innerHTML = '<p class="text-red-500">No se pudo cargar el historial.</p>'; }
@@ -644,29 +567,35 @@
                  });
             });
 
-            // --- Hour Picker Logic ---
-            function generateHourGrid(containerId) {
+            function generateHourGrid(containerId, selectedHours = []) {
                 const container = document.getElementById(containerId);
-                container.innerHTML = '';
+                if (!container) return;
+                container.innerHTML = ''; 
                 for (let i = 0; i < 24; i++) {
                     const hourBtn = document.createElement('button');
                     hourBtn.type = 'button';
-                    hourBtn.className = 'hour-btn rounded';
+                    hourBtn.className = 'hour-btn rounded text-xs py-1'; 
                     hourBtn.textContent = `${i}hs`;
                     hourBtn.dataset.hour = i;
+                    if (selectedHours.includes(i)) {
+                        hourBtn.classList.add('hour-selected');
+                    }
                     container.appendChild(hourBtn);
                 }
-                container.addEventListener('click', e => {
-                    if (e.target.classList.contains('hour-btn')) {
-                        e.target.classList.toggle('hour-selected');
-                    }
-                });
+                 if (!container.hasAttribute('data-listener-added')) {
+                    container.addEventListener('click', e => {
+                        if (e.target.classList.contains('hour-btn')) {
+                            e.target.classList.toggle('hour-selected');
+                        }
+                    });
+                    container.setAttribute('data-listener-added', 'true');
+                 }
             }
-
-            generateHourGrid('new-order-hours-grid');
-            generateHourGrid('edit-order-hours-grid');
+             generateHourGrid('new-order-hours-grid');
+             generateHourGrid('edit-order-hours-grid');
         }
     });
     </script>
 </body>
 </html>
+
